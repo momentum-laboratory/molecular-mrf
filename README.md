@@ -23,7 +23,11 @@ The argument `-e` allows installation in editable mode, so you can change source
 Each example folder contains pairs of .ipynb files and .py which you can use. Follow the .ipynb files step-by-step to repeat Nature Protocols figures. Additional details on each example can be found in Nature Protocol paper.
 
 `dot_prod_example` - example of performing dot. product matching on the L-arginine phantom data. You have to run it first before moving to `deep_reco_example` since it uses DP-generated masks
+
 `deep_reco_example` - example of quantification using deep learning
+
 `sequential_nn_example` - example of implementation of sequential neural-network CEST MRF quantification, i.e. by using additional information such as T1/T2 maps. Examples are provided on Iohexol data and MT mouse data.
+
 `human_example` - example of neural-network quantification inference on the clinical human data
+
 `metrics_example` - example of using Monte Carlo and Cramer Rao Bound for MRF schedule quality assessment.
