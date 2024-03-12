@@ -1,33 +1,34 @@
-# CEST-MRF
-This code is for quickly generating CEST-MRF dictionaries using parallel execution.
-Written by Nikita Vladimirov, some modifications by Or Perlman and built on and inspired by:
-1. [pypulseq-cest](https://github.com/KerstinKaspar/pypulseq-cest/blob/main/pypulseq_cest/parser.py) 
-2. [CEST-MRF](https://github.com/operlman/cest-mrf)
-3. [pulseq-cest Matlab](https://github.com/kherz/pulseq-cest/tree/master) 
+# Quantitative CEST-MRF
+This repository contains a CEST-MRF signal simulator and an exemplary guide on how to perform CEST-MRF step by step. The detailed protocol for CEST-MRF experiments can be found in the Nature Protocols paper. [Nature paper](https://github.com/operlman/cest-mrf)
 
+The CEST-MRF package (open-py-cest-mrf) facilitates rapid generation of CEST-MRF dictionaries through parallel execution. It was authored by Nikita Vladimirov with contributions from Or Perlman and is inspired by and builds upon the following works:
+1. [pypulseq-cest](https://github.com/KerstinKaspar/pypulseq-cest/blob/main/pypulseq_cest/parser.py)
+2. [CEST-MRF](https://github.com/operlman/cest-mrf)
+3. [pulseq-cest Matlab](https://github.com/kherz/pulseq-cest/tree/master)
 
 ## Prerequisites:
 - Python >= 3.9
-- git
+- Git
 
 ## Installation
-Run the following command inside the terminal (preferably in a clean conda env or similar):
-`cd open-py-cest-mrf`
-`pip install -e .`
-
-The argument `-e` allows installation in editable mode, so you can change sources inside your local copy.
+To install, execute the following command in the terminal (ideally within a clean conda environment or similar):
+```
+cd open-py-cest-mrf
+pip install -e .
+```
+The `-e` argument enables editable mode installation, allowing you to modify the source code directly in your local copy.
 
 ## Structure:
-`open-py-cest-mrf` - main CEST MRF simulator package, refer to the README.md inside for further details
+`open-py-cest-mrf` is the main package for the CEST MRF simulator. For further details, refer to the README.md within the package. 
 
-Each example folder contains pairs of .ipynb files and .py which you can use. Follow the .ipynb files step-by-step to repeat Nature Protocols figures. Additional details on each example can be found in Nature Protocol paper.
+Each example folder contains a pair of .ipynb files and .py files. To replicate the figures from the Nature Protocols, follow the steps in the .ipynb files. The Nature Protocol paper provides additional information on each example. Some folders may contain a `visualization.ipynb` file that recreates figures from the paper. [Nature paper](https://github.com/operlman/cest-mrf)
 
-`dot_prod_example` - example of performing dot. product matching on the L-arginine phantom data. You have to run it first before moving to `deep_reco_example` since it uses DP-generated masks
+`dot_prod_example` demonstrates how to perform dot product matching on L-arginine phantom data, including .seq, .yaml, and MRF dictionary generation. This example should be run first before proceeding to `deep_reco_example` as it uses DP-generated masks. It includes dp_clinical.ipynb (L-arg 3T data) and dp_preclinical.ipynb (L-arg 9.4T data), along with corresponding .py files. 
 
-`deep_reco_example` - example of quantification using deep learning
+`deep_reco_example` showcases quantification using deep learning, including a .yaml file, MRF dictionary generation, and network training and testing. It includes deep_reco_clinical.ipynb (L-arg 3T data) and deep_reco_preclinical.ipynb (L-arg 9.4T data), with corresponding .py files forthcoming. 
 
-`sequential_nn_example` - example of implementation of sequential neural-network CEST MRF quantification, i.e. by using additional information such as T1/T2 maps. Examples are provided on Iohexol data and MT mouse data.
+`sequential_nn_example` offers an example of implementing sequential neural-network CEST MRF quantification by utilizing additional information such as T1/T2 maps. This includes .seq, .yaml files, dictionary generation, and network training and testing on Iohexol data and MT mouse data. It features dp_clinical.ipynb (L-arg 3T data) and dp_preclinical.ipynb (L-arg 9.4T data) along with corresponding .py files. [DOI link](https://github.com/operlman/cest-mrf)
 
-`human_example` - example of neural-network quantification inference on the clinical human data
+`human_example` is an example of neural-network quantification inference on clinical human data. It includes dp_clinical.ipynb (L-arg 3T data) and dp_preclinical.ipynb (L-arg 9.4T data), along with corresponding .py files. [Ouri's paper link](https://github.com/operlman/cest-mrf)
 
-`metrics_example` - example of using Monte Carlo and Cramer Rao Bound for MRF schedule quality assessment.
+`metrics_example` demonstrates the use of Monte Carlo and Cramer Rao Bound for assessing the quality of MRF schedules. It includes dp_clinical.ipynb (L-arg 3T data) and dp_preclinical.ipynb (L-arg 9.4T data), along with corresponding .py files.
