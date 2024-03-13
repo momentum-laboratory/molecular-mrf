@@ -2,11 +2,11 @@
 This repository contains a CEST-MRF (Bloch-McConnell-based) signal simulator and an extensive step-by-step guide for semisolid MT and CEST MRF experiments. This repository is part of a detailed protocol paper entitled "Quantitative Molecular Imaging using Deep Magnetic Resonance Fingerprinting" (under review at Nat. Prot.). 
 
 ## The key publications associated with this protocol are:
-1. Perlman, O., Ito, H., Herz, K. et al. Quantitative imaging of apoptosis following oncolytic virotherapy by magnetic resonance fingerprinting aided by deep learning. Nat. Biomed. Eng 6, 648–657 (2022). [Link] (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9091056/)
+1. Perlman, O., Ito, H., Herz, K. et al. Quantitative imaging of apoptosis following oncolytic virotherapy by magnetic resonance fingerprinting aided by deep learning. Nat. Biomed. Eng 6, 648–657 (2022). (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9091056/)
 
-2. Cohen, O, Yu, VY, Tringale, KR, et al. CEST MR fingerprinting (CEST-MRF) for brain tumor quantification using EPI readout and deep learning reconstruction. Magn Reson Med. 89, 233-249 (2023). [Link] (https://onlinelibrary.wiley.com/doi/full/10.1002/mrm.29448)
+2. Cohen, O, Yu, VY, Tringale, KR, et al. CEST MR fingerprinting (CEST-MRF) for brain tumor quantification using EPI readout and deep learning reconstruction. Magn Reson Med. 89, 233-249 (2023). (https://onlinelibrary.wiley.com/doi/full/10.1002/mrm.29448)
 
-3. Kang, B, Kim, B, Schär, M, Park, H, Heo, H-Y. Unsupervised learning for magnetization transfer contrast MR fingerprinting: Application to CEST and nuclear Overhauser enhancement imaging. Magn Reson Med. 85, 2040–2054 (2021). [Link] (https://doi.org/10.1002/mrm.28573)
+3. Kang, B, Kim, B, Schär, M, Park, H, Heo, H-Y. Unsupervised learning for magnetization transfer contrast MR fingerprinting: Application to CEST and nuclear Overhauser enhancement imaging. Magn Reson Med. 85, 2040–2054 (2021). (https://doi.org/10.1002/mrm.28573)
 
  
 The CEST-MRF package (open-py-cest-mrf) facilitates rapid generation of CEST-MRF dictionaries through parallel execution. It was developed by Nikita Vladimirov and is inspired by and builds upon the following works:
@@ -44,7 +44,7 @@ docker run vnikale/pycest-starter
 `open-py-cest-mrf` is the main package for the CEST MRF simulator. For further details, refer to open-py-cest-mrf/README.md.
 The repository includes 4 main examplary case studies, arranged into separate folders. Each folder contains a Jupyther noebook (.ipynb) and a python script (.py) file. To reproduce the figures from the Nat. Prot. paper, follow the steps described in the .ipynb files. The protocol paper provides additional backgruond information and explanations for each example. Some folders may contain a `visualization.ipynb` file that recreates the original figures from the paper.
 
-Each example folder contains a pair of .ipynb files and .py files. To replicate the figures from the Nature Protocols, follow the steps in the .ipynb files. The Nature Protocol paper provides additional information on each example. Some folders may contain a `visualization.ipynb` file that recreates figures from the paper. [Nature paper]
+Each example folder contains a pair of .ipynb files and .py files. To replicate the figures from the Nature Protocols, follow the steps in the .ipynb files. The Nature Protocol paper provides additional information on each example. Some folders may contain a `visualization.ipynb` file that recreates figures from the paper. 
 
 To run .py examples you have to treat the repo as a package, e.g.:
 ```
