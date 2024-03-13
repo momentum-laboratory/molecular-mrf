@@ -44,15 +44,12 @@ docker run vnikale/pycest-starter
 `open-py-cest-mrf` is the main package for the CEST MRF simulator. For further details, refer to open-py-cest-mrf/README.md.
 The repository includes 4 main examplary case studies, arranged into separate folders. Each folder contains a Jupyther noebook (.ipynb) and a python script (.py) file. To reproduce the figures from the Nat. Prot. paper, follow the steps described in the .ipynb files. The protocol paper provides additional backgruond information and explanations for each example. Some folders may contain a `visualization.ipynb` file that recreates the original figures from the paper.
 
-=======
-
 Each example folder contains a pair of .ipynb files and .py files. To replicate the figures from the Nature Protocols, follow the steps in the .ipynb files. The Nature Protocol paper provides additional information on each example. Some folders may contain a `visualization.ipynb` file that recreates figures from the paper. [Nature paper]
 
 To run .py examples you have to treat the repo as a package, e.g.:
 ```
 python -m dot_prod_example.dp_preclinical
 python -m dot_prod_example.dp_clinical
-etc
 ```
 
 `dot_prod_example` demonstrates how to perform dot product matching using L-arginine phantom data. It includes .seq, .yaml, and MRF dictionary generation. This example should be run first before proceeding to `deep_reco_example` as it uses DP-generated masks. It includes `dp_clinical.ipynb` (L-arg 3T data) and `dp_preclinical.ipynb (L-arg 9.4T data)`, along with the corresponding .py files. 
@@ -66,5 +63,3 @@ etc
 `sequential_nn_example` offers an example of implementing sequential neural-network CEST MRF quantification by utilizing additional information such as T1/T2 maps. This includes .seq, .yaml files, dictionary generation, and network training and testing on Iohexol data and MT mouse data. It features `sequential_example_iohexenol.ipynb` (Iohexol 4.7T data) and `sequential_example_iohexenol.ipynb` (Mouse MR 9.4T data) along with corresponding .py files.
 
 `metrics_example` demonstrates the use of the Monte Carlo and the Cramer Rao Bound for assessing the encoding capability of MRF acquisition schedules. It includes `monte_carlo.ipynb` and `crlb.ipynb`, along with the corresponding .py files.
-
-=======
