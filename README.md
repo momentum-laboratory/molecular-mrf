@@ -34,7 +34,14 @@ docker run vnikale/pycest-starter
 ## Structure:
 `open-py-cest-mrf` is the main package for the CEST MRF simulator. For further details, refer to the README.md within the package. 
 
-Each example folder contains a pair of .ipynb files and .py files. To replicate the figures from the Nature Protocols, follow the steps in the .ipynb files. The Nature Protocol paper provides additional information on each example. Some folders may contain a `visualization.ipynb` file that recreates figures from the paper. [Nature paper](https://github.com/operlman/cest-mrf)
+Each example folder contains a pair of .ipynb files and .py files. To replicate the figures from the Nature Protocols, follow the steps in the .ipynb files. The Nature Protocol paper provides additional information on each example. Some folders may contain a `visualization.ipynb` file that recreates figures from the paper. [Nature paper]
+
+To run .py examples you have to treat everything as a package, e.g.:
+```
+python -m dot_prod_example.dp_preclinical
+python -m dot_prod_example.dp_clinical
+etc
+```
 
 `dot_prod_example` demonstrates how to perform dot product matching on L-arginine phantom data, including .seq, .yaml, and MRF dictionary generation. This example should be run first before proceeding to `deep_reco_example` as it uses DP-generated masks. It includes `dp_clinical.ipynb` (L-arg 3T data) and `dp_preclinical.ipynb (L-arg 9.4T data)`, along with corresponding .py files. 
 
