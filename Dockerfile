@@ -18,7 +18,8 @@ SHELL ["conda", "run", "-n", "pycest", "/bin/bash", "-c"]
 
 WORKDIR /usr/src/app/open-py-cest-mrf
 RUN pip install -e .
-
-
 WORKDIR /usr/src/app
 
+RUN conda install nvidia/label/cuda-11.8.0::cuda-toolkit
+RUN pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+RUN pip install opencv-python
