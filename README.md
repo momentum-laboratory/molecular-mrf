@@ -40,8 +40,8 @@ Each example folder contains a pair of .ipynb files and .py files. To replicate 
 
 `deep_reco_example` showcases quantification using deep learning, including a .yaml file, MRF dictionary generation, and network training and testing. It includes `deep_reco_clinical.ipynb` (L-arg 3T data) and `deep_reco_preclinical.ipynb ` (L-arg 9.4T data), with corresponding .py files forthcoming. 
 
-`sequential_nn_example` offers an example of implementing sequential neural-network CEST MRF quantification by utilizing additional information such as T1/T2 maps. This includes .seq, .yaml files, dictionary generation, and network training and testing on Iohexol data and MT mouse data. It features `sequential_example_iohexenol.ipynb` (Iohexol 4.7T data) and `sequential_example_iohexenol.ipynb` (Mouse MR 9.4T data) along with corresponding .py files. [Paper link](https://github.com/operlman/cest-mrf)
+`sequential_nn_example` offers an example of implementing sequential neural-network CEST MRF quantification by utilizing additional information such as T1/T2 maps. This includes .seq, .yaml files, dictionary generation, and network training and testing on Iohexol data and MT mouse data. It features `sequential_example_iohexenol.ipynb` (Iohexol 4.7T data) and `sequential_example_iohexenol.ipynb` (Mouse MR 9.4T data) along with corresponding .py files.
 
-`human_example` is an example of neural-network quantification inference on clinical human data. It includes `drone_example.ipynb` along with corresponding .py file. [Ouri's paper link](https://github.com/operlman/cest-mrf)
+`human_example` is an example of neural-network quantification inference on clinical human data. It includes `drone_example.ipynb` along with corresponding .py file. 
 
 `metrics_example` demonstrates the use of Monte Carlo and Cramer Rao Bound for assessing the quality of MRF schedules. It includes `monte_carlo.ipynb` and `crlb.ipynb`, along with corresponding .py files.
