@@ -44,8 +44,6 @@ docker run vnikale/pycest-starter
 `open-py-cest-mrf` is the main package for the CEST MRF simulator. For further details, refer to open-py-cest-mrf/README.md.
 The repository includes 4 main examplary case studies, arranged into separate folders. Each folder contains a Jupyther noebook (.ipynb) and a python script (.py) file. To reproduce the figures from the Nat. Prot. paper, follow the steps described in the .ipynb files. The protocol paper provides additional backgruond information and explanations for each example. Some folders may contain a `visualization.ipynb` file that recreates the original figures from the paper.
 
-Each example folder contains a pair of .ipynb files and .py files. To replicate the figures from the Nature Protocols, follow the steps in the .ipynb files. The Nature Protocol paper provides additional information on each example. Some folders may contain a `visualization.ipynb` file that recreates figures from the paper. 
-
 To run .py examples you have to treat the repo as a package, e.g.:
 ```
 python -m dot_prod_example.dp_preclinical
