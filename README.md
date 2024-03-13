@@ -36,7 +36,7 @@ docker run vnikale/pycest-starter
 
 Each example folder contains a pair of .ipynb files and .py files. To replicate the figures from the Nature Protocols, follow the steps in the .ipynb files. The Nature Protocol paper provides additional information on each example. Some folders may contain a `visualization.ipynb` file that recreates figures from the paper. [Nature paper]
 
-To run .py examples you have to treat everything as a package, e.g.:
+To run .py examples you have to treat the repo as a package, e.g.:
 ```
 python -m dot_prod_example.dp_preclinical
 python -m dot_prod_example.dp_clinical
