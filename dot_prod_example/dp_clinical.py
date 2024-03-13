@@ -1,74 +1,49 @@
 import os
 import time
 import numpy as np
-import pypulseq
 import scipy.io as sio
-from numpy import linalg as la
-
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
+from matplotlib import pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
+import pypulseq as pp
+
+from utils.colormaps import b_viridis
+
+from dot_prod_example.configs import ConfigClinical
+from dot_prod_example.sequences import write_sequence_clinical
 
 from cest_mrf.write_scenario import write_yaml_dict
 from cest_mrf.dictionary.generation import generate_mrf_cest_dictionary
-from cest_mrf.metrics.dot_product import  dot_prod_matching
+from cest_mrf.metrics.dot_product import dot_prod_matching
 
+def setup_sequence_definitions(cfg, b1):
+    """Setup the sequence definitions based on B1 values and configuration."""
+    num_meas = len(b1)
+    seq_defs = {
+        "n_pulses": 13,
+        "num_meas": num_meas,
+        "tp": 100e-3,
+        "td": 100e-3,
+        "offsets_ppm": np.ones(num_meas) * 3.0,
+        "dcsat": 100e-3 / (100e-3 + 100e-3),
+        "tsat": np.ones(num_meas) * 2.5,
+        "trec": np.ones(num_meas) * 3.5 - np.ones(num_meas) * 2.5,
+        "spoiling": True,
+        "b1": b1,
+        "seq_id_string": os.path.splitext(cfg['seq_fn'])[1][1:],
+        "freq": cfg['freq'],
+    }
 
-import os
-import sys
-# Add the parent directory to sys.path to find the utils package
-module_path = os.path.abspath(os.path.join('..')) 
-if module_path not in sys.path:
-    sys.path.append(module_path)
+    lims = create_scanner_limits(cfg)
 
-from utils.colormaps import b_viridis, b_winter  
+    seq_defs["gamma_hz"] = lims.gamma * 1e-6
+    seq_defs["freq"] = cfg['freq']
+    seq_defs['b0'] = seq_defs['freq'] / seq_defs["gamma_hz"]
 
-from configs import ConfigClinical
-from sequences import write_sequence_clinical
+    return seq_defs, lims
 
-import pypulseq as pp
-
-
-
-def main():
-    data_f = 'data'
-    output_f = 'results'
-
-    # cfg = ConfigParams()
-    cfg = ConfigClinical().get_config()
-
-    # Write the .yaml according to the config.py file (inside cest_mrf folder)
-    write_yaml_dict(cfg, cfg['yaml_fn'])
-
-    b1 = [2, 2, 1.7, 1.5, 1.2, 1.2, 3, 0.5, 3, 1, 2.2, 3.2, 1.5, 0.7, 1.5, 2.2, 2.5, 1.2, 3, 0.2, 1.5, 2.5, 0.7, 4,
-            3.2, 3.5, 1.5, 2.7, 0.7, 0.5]
-
-    # Write the seq file for a 2d experiment
-    # for more info about the seq file, check out the pulseq-cest repository
-    seq_defs = {}
-    seq_defs["n_pulses"] = 13  # number of pulses
-    seq_defs["num_meas"] = len(b1)  # number of repetition
-    seq_defs["tp"] = 100e-3  # pulse duration [s]
-    seq_defs["td"] = 100e-3  # interpulse delay [s]
-    seq_defs["offsets_ppm"] = np.ones(seq_defs["num_meas"]) * 3.0
-
-    TR = np.ones(seq_defs["num_meas"]) * 3.5
-    Tsat = np.ones(seq_defs["num_meas"]) * 2.5
-
-    seq_defs["dcsat"] = (seq_defs["tp"]) / (seq_defs["tp"] + seq_defs["td"])  # duty cycle
-    seq_defs["tsat"] = Tsat  # saturation time [s]
-    seq_defs["trec"] = TR - seq_defs["tsat"]  # net recovery time [s]
-    seq_defs["spoiling"] = True
-
-    seqid = os.path.splitext(cfg['seq_fn'])[1][1:]
-    seq_defs['seq_id_string'] = seqid  # unique seq id
-
-    # we vary B1 for the dictionary generation
-    seq_defs['b1'] = b1
-
-
-    # create scanner limits object
-    lims = pp.Opts(
+def create_scanner_limits(cfg):
+    """Create scanner limits object."""
+    return pp.Opts(
         max_grad=40,
         grad_unit="mT/m",
         max_slew=130,
@@ -79,99 +54,94 @@ def main():
         gamma=cfg['gamma']/2/np.pi*1e6,
     )
 
-    seq_defs["gamma_hz"] = lims.gamma * 1e-6
-    seq_defs["freq"] = cfg['freq']
-    seq_defs['b0'] = seq_defs['freq'] / seq_defs["gamma_hz"]
-
-    # write the clinical sequence file, flag 'simulation' is used to generate the sequence file with readout sequence
-    write_sequence_clinical(seq_defs, cfg['seq_fn'], lims, type='simulation')
-
-    start = time.perf_counter()
-    dictionary = generate_mrf_cest_dictionary(seq_fn=cfg['seq_fn'], param_fn=cfg['yaml_fn'], dict_fn= cfg['dict_fn'], num_workers=cfg['num_workers'],
-                                    axes='xy')  # axes can also be 'z' if no readout is simulated
-    end = time.perf_counter()
-    s = (end - start)
-    print(f"Dictionary simulation and preparation took {s:.03f} s.")
-
-    data_fn = 'dataToMatch_30_126_88_slice75.mat'
-    data_fn = os.path.join(data_f, data_fn)
+def preprocess_image(data_f, file_name):
+    """Load and preprocess the image data."""
+    data_fn = os.path.join(data_f, file_name)
     img = sio.loadmat(data_fn)['dataToMatch']
-    img = np.nan_to_num(img)[:,19:-19,:]
+    return np.nan_to_num(img)[:, 19:-19, :]
 
-    plt.imshow(img[0,...], cmap='gray')
-    img.shape
-
-    dictionary['sig'] = np.array(dictionary['sig'])
-    for key in dictionary.keys():
-        if key != 'sig':
-            dictionary[key] = np.expand_dims(np.squeeze(np.array(dictionary[key])), 0)
-    print(dictionary['sig'].shape)
-
-    # Run dot product matching
-    start = time.perf_counter()
-    quant_maps = dot_prod_matching(dictionary=dictionary, acquired_data=img, batch_size=img.shape[1]*2)
-    end = time.perf_counter()
-    s = (end - start)
-    print(f"Dot product matching took {s:.03f} s.")
-
-    out_fn = 'quant_maps_3T.mat'
-    out_fn = os.path.join(output_f, out_fn)
-    sio.savemat(out_fn, quant_maps)
-
-    out_fn = 'quant_maps_3T.mat'
-    out_fn = os.path.join(output_f, out_fn)
-    quant_maps = sio.loadmat(out_fn)
-
-    # mask from dot-prod
+def apply_masks(quant_maps, output_f):
+    """Apply different masks based on quant_map criteria and save them."""
     mask_dp = quant_maps['dp'] > 0.9995
-    np.save('mask_dp.npy', mask_dp)
-
-    # mask from ksw
     mask_ksw = quant_maps['ksw'] > 100
-    np.save('mask_ksw_3T.npy', mask_ksw)
-
-    # mask from fs
     mask_fs = quant_maps['fs'] * 110e3 / 3 > 10
-    np.save('mask_fs_3T.npy', mask_fs)
-
     mask = mask_ksw * mask_dp * mask_fs
 
-    np.save('mask_3T.npy', mask)
+    np.save(os.path.join(output_f, 'mask_dp.npy'), mask_dp)
+    np.save(os.path.join(output_f, 'mask_ksw_3T.npy'), mask_ksw)
+    np.save(os.path.join(output_f, 'mask_fs_3T.npy'), mask_fs)
+    np.save(os.path.join(output_f, 'mask_3T.npy'), mask)
 
-    # mask = np.ones_like(quant_maps_fs)
-
-    pdf_fn = 'dot_product_results_3T.pdf' # quantitative maps output filename
-    pdf_fn = os.path.join(output_f, pdf_fn)
-
+def visualize_and_save_results(quant_maps, output_f, mask):
+    """Visualize quant maps, apply mask, and save as PDF."""
+    pdf_fn = os.path.join(output_f, 'dot_product_results_3T.pdf')
     os.makedirs(output_f, exist_ok=True)
 
     fig, axes = plt.subplots(1, 3, figsize=(30, 25))
-
     color_maps = [b_viridis, 'magma', 'magma']
     data_keys = ['fs', 'ksw', 'dp']
     titles = ['[L-arg] (mM)', 'ksw (Hz)', 'Dot product']
     clim_list = [(0, 120), (0, 1400), (0.999, 1)]
     tick_list = [np.arange(0, 140, 20), np.arange(0, 1500, 100), np.arange(0.999, 1.0005, 0.0005)]
 
-    unified_font_size = 25
+    for ax, color_map, key, title, clim, ticks in zip(axes.flat, color_maps, data_keys, titles, clim_list, tick_list):
+        vals = quant_maps[key] * (key == 'fs' and 110e3/3 or 1) * mask
+        plot = ax.imshow(vals, cmap=color_map)
+        plot.set_clim(*clim)
+        ax.set_title(title, fontsize=25)
+        cb = plt.colorbar(plot, ax=ax, ticks=ticks, orientation='vertical', fraction=0.046, pad=0.04)
+        cb.ax.tick_params(labelsize=25)
+        ax.set_axis_off()
 
-    # Save the plot to a PDF file
     with PdfPages(pdf_fn) as pdf:
-        for ax, color_map, key, title, clim, ticks in zip(axes.flat, color_maps, data_keys, titles, clim_list, tick_list):
-            vals = quant_maps[key]
-
-            if key == 'fs':
-                vals = vals * 110e3/3
-
-            plot = ax.imshow(vals * mask, cmap=color_map)
-            plot.set_clim(*clim)
-            ax.set_title(title, fontsize=unified_font_size)
-            cb = plt.colorbar(plot, ax=ax, ticks=ticks, orientation='vertical', fraction=0.046, pad=0.04)
-            cb.ax.tick_params(labelsize=unified_font_size)
-            ax.set_axis_off()
-        
-        plt.tight_layout()
         pdf.savefig(fig)
+        plt.close()
+
+def preprocess_dict(dictionary):
+    """Preprocess the dictionary for dot-matching"""
+    dictionary['sig'] = np.array(dictionary['sig'])
+    for key in dictionary.keys():
+        if key != 'sig':
+            dictionary[key] = np.expand_dims(np.squeeze(np.array(dictionary[key])), 0)
+    print(dictionary['sig'].shape)
+
+    return dictionary
+
+def main():
+    data_f = r'dot_prod_example/data'
+    output_f = r'dot_prod_example/results'
+
+    cfg = ConfigClinical().get_config()
+    write_yaml_dict(cfg, cfg['yaml_fn'])
+
+    # Write sequence file
+    b1_values = [2, 2, 1.7, 1.5, 1.2, 1.2, 3, 0.5, 3, 1, 2.2, 3.2, 1.5, 0.7, 1.5, 2.2, 2.5, 1.2, 3, 0.2, 1.5, 2.5, 0.7, 4, 3.2, 3.5, 1.5, 2.7, 0.7, 0.5]
+    seq_defs, lims = setup_sequence_definitions(cfg, b1_values)
+    write_sequence_clinical(seq_defs, cfg['seq_fn'], lims, type='simulation')
+
+    # Dictionary generation
+    start = time.perf_counter()
+    dictionary = generate_mrf_cest_dictionary(seq_fn=cfg['seq_fn'], param_fn=cfg['yaml_fn'], dict_fn=cfg['dict_fn'], num_workers=cfg['num_workers'], axes='xy')
+    print(f"Dictionary simulation and preparation took {time.perf_counter() - start:.03f} s.")
+
+    dictionary = preprocess_dict(dictionary)
+
+    # Load and preprocess image data
+    img = preprocess_image(data_f, 'dataToMatch_30_126_88_slice75.mat')
+    start = time.perf_counter()
+    quant_maps = dot_prod_matching(dictionary=dictionary, acquired_data=img, batch_size=img.shape[1]*2)
+    print(f"Dot product matching took {time.perf_counter() - start:.03f} s.")
+
+    out_fn = 'quant_maps_3T.mat'
+    sio.savemat(os.path.join(output_f, out_fn), quant_maps)
+
+    # Reload quant_maps for masks application
+    quant_maps = sio.loadmat(os.path.join(output_f, out_fn))
+    apply_masks(quant_maps, output_f)
+
+    # Visualize and save results
+    mask = np.load(os.path.join(output_f, 'mask_3T.npy'))
+    visualize_and_save_results(quant_maps, output_f, mask)
 
 if __name__ == "__main__":
     main()
