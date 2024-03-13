@@ -40,14 +40,16 @@ def generate_quant_maps(data_f, output_f, dict_fn):
     """Run dot product matching and save quant maps."""
     acq_fn = os.path.join(data_f, 'acquired_data.mat')
     quant_maps = dot_prod_matching(dict_fn=dict_fn, acquired_data_fn=acq_fn)
-    out_fn = os.path.join(output_f, 'quant_maps.mat')
-    sio.savemat(out_fn, quant_maps)
-    print('quant_maps.mat saved')
-    return out_fn
 
-def visualize_and_save_results(quant_maps_path, output_f):
+    return quant_maps
+
+def visualize_and_save_results(quant_maps, output_f):
     """Visualize quant maps and save them as PDF."""
-    quant_maps = sio.loadmat(quant_maps_path)
+    os.makedirs(output_f, exist_ok=True)
+
+    sio.savemat(output_f, quant_maps)
+    print('quant_maps.mat saved')
+
     mask = quant_maps['dp'] > 0.99974
     np.save('mask.npy', mask)
 
@@ -90,11 +92,11 @@ def main():
 
     # Dot product matching and quant map generation
     start_time = time.perf_counter()
-    quant_maps_path = generate_quant_maps(data_f, output_f, cfg['dict_fn'])
+    quant_maps = generate_quant_maps(data_f, output_f, cfg['dict_fn'])
     print(f"Dot product matching took {time.perf_counter() - start_time:.03f} s.")
 
     # Visualization and saving results
-    visualize_and_save_results(quant_maps_path, output_f)
+    visualize_and_save_results(quant_maps, output_f)
 
 if __name__ == '__main__':
     main()

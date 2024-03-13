@@ -135,8 +135,6 @@ def main():
     out_fn = 'quant_maps_3T.mat'
     sio.savemat(os.path.join(output_f, out_fn), quant_maps)
 
-    # Reload quant_maps for masks application
-    quant_maps = sio.loadmat(os.path.join(output_f, out_fn))
     apply_masks(quant_maps, output_f)
 
     # Visualize and save results
