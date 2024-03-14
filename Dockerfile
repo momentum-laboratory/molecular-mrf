@@ -8,6 +8,8 @@ RUN apt-get update && \
     apt-get install -y gcc g++ libstdc++6 swig git && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+    
+RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
 
 ENV PATH /opt/conda/envs/pycest/bin:$PATH
 #RUN conda env create -f env.yaml
