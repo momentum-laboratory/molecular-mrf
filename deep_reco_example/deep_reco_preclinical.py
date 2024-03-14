@@ -32,7 +32,7 @@ def main():
     # Training properties
     learning_rate = 0.0003
     batch_size = 512
-    num_epochs = 100
+    num_epochs = 2
     noise_std = 0.002  # noise level for training
 
     patience = 10  # number of epochs to wait before early stopping
@@ -57,7 +57,7 @@ def main():
     train_loader = prepare_dataloader(dictionary, batch_size=batch_size)
     reco_net = Network(sig_n).to(device)
     optimizer = torch.optim.Adam(reco_net.parameters(), lr=learning_rate)
-    reco_net = train_network(train_loader, reco_net, optimizer, device, learning_rate, num_epochs, noise_std, min_param_tensor, max_param_tensor)
+    reco_net = train_network(train_loader, reco_net, optimizer, device, learning_rate, num_epochs, noise_std, min_param_tensor, max_param_tensor, patience, min_delta)
     
     data_fn = os.path.join(data_folder, 'acquired_data.mat')
     eval_data, c_acq_data, w_acq_data = load_and_preprocess_data(data_fn, sig_n)
@@ -102,17 +102,13 @@ def prepare_dataloader(data, batch_size):
     dataset = DatasetMRF(data)
     return DataLoader(dataset=dataset, batch_size=batch_size, shuffle=True, num_workers=8)
 
-def train_network(train_loader, reco_net, optimizer, device, learning_rate=0.0003, num_epochs=100, noise_std=0.002, min_param_tensor=None, max_param_tensor=None, patience=10, min_delta=0.01):
+def train_network(train_loader, reco_net, optimizer, device, learning_rate, num_epochs, noise_std, min_param_tensor, max_param_tensor, patience, min_delta):
     """Train the network."""
-    # Storing current time
     t0 = time.time()
-
     loss_per_epoch = []
     patience_counter = 0
-    min_loss = 100
+    min_loss = np.inf
 
-    #   Training loop   #
-    # ################# #
     pbar = tqdm.tqdm(total=num_epochs)
     for epoch in range(num_epochs):
         # Cumulative loss
@@ -158,14 +154,13 @@ def train_network(train_loader, reco_net, optimizer, device, learning_rate=0.000
             print('Early stopping!')
             break
 
-
     print(f"Training took {time.time() - t0:.2f} seconds")
 
     torch.save({
         'model_state_dict': reco_net.state_dict(),
         'optimizer_state_dict': optimizer.state_dict(),  #
         'loss_per_epoch': loss_per_epoch,
-    }, r'deep_reco_example/checkpoint.pt')
+    }, os.path.join(FOLDER,'checkpoint.pt'))
     
     return reco_net
 
@@ -257,7 +252,6 @@ def define_min_max(dictionary):
     max_param_tensor = torch.tensor(np.hstack((max_fs, max_ksw)), requires_grad=False)
 
     return min_param_tensor, max_param_tensor
-
 
 if __name__ == '__main__':
     main()
