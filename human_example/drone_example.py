@@ -10,13 +10,10 @@ import matplotlib
 
 import os
 import sys
-# Add the parent directory to sys.path to find the utils package
-module_path = os.path.abspath(os.path.join('..')) 
-if module_path not in sys.path:
-    sys.path.append(module_path)
 
 from utils.colormaps import b_viridis, b_winter  
 
+FOLDER = 'human_example'
 
 def main():
     if torch.cuda.is_available():
@@ -26,12 +23,13 @@ def main():
 
     # define model
     sig_n = 30
-    drone_net = torch.jit.load('drone_net.pt')
+    drone_net = torch.jit.load(os.path.join(FOLDER,'drone_net.pt'))
     drone_net.to(device)
     print(drone_net)
 
     # load checkpoint
     chk_fn = f'checkpoint.pt'
+    chk_fn = os.path.join(FOLDER, chk_fn)
     state_dict = torch.load(chk_fn)
 
     scaling = state_dict['scaling']
@@ -42,6 +40,7 @@ def main():
 
     # load data
     data_fn = f'data_to_match.npy'
+    data_fn = os.path.join(FOLDER, data_fn)
     acquired_data  = np.load(data_fn)
 
     _, c_acq_data, w_acq_data = np.shape(acquired_data)
@@ -76,6 +75,7 @@ def main():
 
     # load brain mask (created with SAM model)
     mask_fn = 'drone_mask.npy'
+    mask_fn = os.path.join(FOLDER, mask_fn)
     mask = np.load(mask_fn)
 
 
@@ -146,3 +146,7 @@ def main():
         
     plt.tight_layout()
     plt.subplots_adjust(wspace=0.01, hspace=0.1)  # Adjust spacing between subplots
+    plt.savefig(os.path.join(FOLDER, 'drone_results.pdf'))
+
+if __name__ == '__main__':
+    main()
