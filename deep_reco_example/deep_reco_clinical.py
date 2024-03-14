@@ -1,70 +1,30 @@
+import os
+import time
 import torch
 import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader
 from torch.autograd import Variable
-from torch.utils.data import Dataset, DataLoader
-
+import numpy as np
 import scipy.io as sio
-
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
+from matplotlib import pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
-
-import numpy as np
-import time
 import tqdm
-
-import os
-import sys
-# Add the parent directory to sys.path to find the utils package
-module_path = os.path.abspath(os.path.join('..')) 
-if module_path not in sys.path:
-    sys.path.append(module_path)
-
-from utils.normalization import normalize_range, un_normalize_range
-from utils.colormaps import b_viridis, b_winter
-
-from dataset import DatasetMRF
-from model import Network
-
-import numpy as np
-import pypulseq
-import scipy.io as sio
 
 from cest_mrf.write_scenario import write_yaml_dict
 from cest_mrf.dictionary.generation import generate_mrf_cest_dictionary
 from cest_mrf.metrics.dot_product import  dot_prod_matching
 
-from configs import ConfigClinical
-import random
+from utils.normalization import normalize_range, un_normalize_range
+from utils.colormaps import b_viridis
 
-def set_seed(seed: int = 42) -> None:
-    np.random.seed(seed)
-    random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    # When running on the CuDNN backend, two further options must be set
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    # Set a fixed value for the hash seed
-    os.environ["PYTHONHASHSEED"] = str(seed)
-    print(f"Random seed set as {seed}")
+from deep_reco_example.dataset import DatasetMRF
+from deep_reco_example.model import Network
+from deep_reco_example.configs import ConfigClinical
 
+FOLDER = 'deep_reco_example'
 
 def main():
-    set_seed(2024)
-
-    data_f = 'data'
-    output_f = 'results'
-
-    # Use GPU if available (otherwise use CPU)
-    if torch.cuda.is_available():
-        device = 'cuda'
-        print("GPU found and will be used")
-    else:
-        device = 'cpu'
-        print("GPU was not found. Using CPU")
-
-
     # Schedule iteration (signal dimension)
     # number of raw images in the CEST-MRF acquisition schedule
     sig_n = 30
@@ -78,60 +38,78 @@ def main():
     patience = 10  # number of epochs to wait before early stopping
     min_delta = 0.01  # minimum absolute change in loss to be considered as an improvement
 
+    set_seed(2024)
+    device = initialize_device()
+    print(f"Using device: {device}")
+    
+    data_folder = r'data'
+    output_folder = r'results'
+    data_folder = os.path.join(FOLDER, data_folder)
+    output_folder = os.path.join(FOLDER, output_folder)
+    
     cfg = ConfigClinical().get_config()
 
-    # Define output filenames
-    yaml_fn = cfg['yaml_fn']
-    seq_fn = cfg['seq_fn'] # we using the same sequence from the dot-product example, so it just provided here, you can refer to the dot-product example for more details
-    dict_fn = cfg['dict_fn']
+    write_yaml_dict(cfg, os.path.join(FOLDER, cfg['yaml_fn']))
 
-    # Write the .yaml according to the config.py file (inside cest_mrf folder)
-    write_yaml_dict(cfg, yaml_fn)
-
-    start = time.perf_counter()
-    dictionary = generate_mrf_cest_dictionary(seq_fn=seq_fn, param_fn=yaml_fn, dict_fn=dict_fn, num_workers=cfg['num_workers'],
-                                    axes='xy')  # axes can also be 'z' if no readout is simulated
-    end = time.perf_counter()
-    s = (end - start)
-    print(f"Dictionary simulation and preparation took {s:.03f} s.")
-
-
-    # temp_data = sio.loadmat('dict3T_noMz0.mat')
-    temp_data = sio.loadmat(dict_fn)
-    min_fs = np.min(temp_data['fs_0'])
-    min_ksw = np.min(temp_data['ksw_0'].transpose().astype(np.float))
-    max_fs = np.max(temp_data['fs_0'])
-    max_ksw = np.max(temp_data['ksw_0'].transpose().astype(np.float))
-
-    min_param_tensor = torch.tensor(np.hstack((min_fs, min_ksw)), requires_grad=False)
-    max_param_tensor = torch.tensor(np.hstack((max_fs, max_ksw)), requires_grad=False)
-    del temp_data, min_fs, min_ksw, max_fs, max_ksw
-
-    # Initializing the reconstruction network
+    dictionary = generate_dict(cfg)
+    min_param_tensor, max_param_tensor = define_min_max(dictionary)
+    
+    train_loader = prepare_dataloader(dictionary, batch_size=batch_size)
     reco_net = Network(sig_n).to(device)
-
     optimizer = torch.optim.Adam(reco_net.parameters(), lr=learning_rate)
+    reco_net = train_network(train_loader, reco_net, optimizer, device, learning_rate, num_epochs, noise_std, min_param_tensor, max_param_tensor, patience, min_delta)
+    
+    data_fn = os.path.join(data_folder, 'dataToMatch_30_126_88_slice75.mat')
+    eval_data, c_acq_data, w_acq_data = load_and_preprocess_data(data_fn, sig_n)
+    quant_maps = evaluate_network(reco_net, eval_data, device, min_param_tensor, max_param_tensor, c_acq_data=c_acq_data, w_acq_data=w_acq_data)
 
-    # training_data = sio.loadmat('dict3T_noMz0.mat')
-    temp_data = sio.loadmat(dict_fn)
-    dataset = DatasetMRF(temp_data)
-
-    train_loader = DataLoader(dataset=dataset,
-                            batch_size=batch_size,
-                            shuffle=True,
-                            num_workers=8)
+    save_and_plot_results(quant_maps, output_folder)
 
 
+def load_and_preprocess_data(data_fn, sig_n):
+    acquired_data = sio.loadmat(data_fn)['dataToMatch'].astype(np.float)
+    acquired_data = acquired_data[:,19:-19,:]
+    _, c_acq_data, w_acq_data = np.shape(acquired_data)
 
-    # Storing current time
+    # Reshaping the acquired data to the shape expected by the NN (e.g. 30 x ... )
+    acquired_data = np.reshape(acquired_data, (sig_n, c_acq_data * w_acq_data), order='F')
+    acquired_data = acquired_data / np.sqrt(np.sum(acquired_data ** 2, axis=0))
+
+    # Transposing for compatibility with the NN - now each row is a trajectory
+    acquired_data = acquired_data.T
+
+    acquired_data = torch.from_numpy(acquired_data).float()
+    acquired_data.requires_grad = False
+
+    return acquired_data, c_acq_data, w_acq_data
+
+
+def set_seed(seed=42):
+    """Set the seed for reproducibility."""
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    os.environ["PYTHONHASHSEED"] = str(seed)
+
+def initialize_device():
+    """Initialize device (GPU/CPU)."""
+    return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+def prepare_dataloader(data, batch_size):
+    """Prepare DataLoader for training."""
+    dataset = DatasetMRF(data)
+    return DataLoader(dataset=dataset, batch_size=batch_size, shuffle=True, num_workers=8)
+
+def train_network(train_loader, reco_net, optimizer, device, learning_rate, num_epochs, noise_std, min_param_tensor, max_param_tensor, patience, min_delta):
+    """Train the network."""
     t0 = time.time()
-
     loss_per_epoch = []
     patience_counter = 0
-    min_loss = 100
+    min_loss = np.inf
 
-    #   Training loop   #
-    # ################# #
     pbar = tqdm.tqdm(total=num_epochs)
     for epoch in range(num_epochs):
         # Cumulative loss
@@ -177,98 +155,107 @@ def main():
             print('Early stopping!')
             break
 
-
     print(f"Training took {time.time() - t0:.2f} seconds")
 
     torch.save({
         'model_state_dict': reco_net.state_dict(),
         'optimizer_state_dict': optimizer.state_dict(),  #
         'loss_per_epoch': loss_per_epoch,
-    }, 'checkpoint3T.pt')
+    }, os.path.join(FOLDER,'checkpoint3T.pt'))
+    
+    return reco_net
 
-
-    # You can skip training and load the pre-trained model for inference
-    loaded_checkpoint = torch.load('checkpoint3T.pt')
-    reco_net = Network(sig_n).to(device)
-    reco_net.load_state_dict(loaded_checkpoint['model_state_dict'])
-
-    # Loading the acquired data
-    data_fn = 'dataToMatch_30_126_88_slice75.mat'
-    data_fn = os.path.join(data_f, data_fn)
-    acquired_data = sio.loadmat(data_fn)['dataToMatch']
-    acquired_data = acquired_data[:,19:-19,:]
-    _, c_acq_data, w_acq_data = np.shape(acquired_data)
-
-    # Reshaping the acquired data to the shape expected by the NN (e.g. 30 x ... )
-    acquired_data = np.reshape(acquired_data, (sig_n, c_acq_data * w_acq_data), order='F')
-    acquired_data = acquired_data / np.sqrt(np.sum(acquired_data ** 2, axis=0))
-
-    # Transposing for compatibility with the NN - now each row is a trajectory
-    acquired_data = acquired_data.T
-
-    acquired_data = torch.from_numpy(acquired_data).to(device).float()
-    acquired_data.requires_grad = False
-
-    # Switching to evaluation mode
+def evaluate_network(reco_net, data, device, min_param_tensor, max_param_tensor, c_acq_data=30, w_acq_data=126):
+    """Evaluate the network on new data."""
     reco_net.eval()
+    with torch.no_grad():
+        inputs = data.to(device).float()
+        outputs = reco_net(inputs)
 
-    t0 = time.time()
-    prediction = reco_net(acquired_data)
-    print(f"Prediction took {time.time() - t0:.5f} seconds")
+    outputs = un_normalize_range(outputs, original_min=min_param_tensor.to(device),
+                                original_max=max_param_tensor.to(device), new_min=-1, new_max=1)
+    outputs = torch.nan_to_num(outputs, nan=0.0, posinf=0.0, neginf=0.0)
 
-    prediction = un_normalize_range(prediction, original_min=min_param_tensor.to(device),
-                                    original_max=max_param_tensor.to(device), new_min=-1, new_max=1)
-
-    prediction = torch.nan_to_num(prediction, nan=0.0, posinf=0.0, neginf=0.0)
-
-
-    # load mask from created using dot-product values
-    mask = np.load(f'{os.path.dirname(os.getcwd())}/dot_prod_example/mask_3T.npy')
-
-
-    os.makedirs(output_f, exist_ok=True)
-
-    # Reshaping back to the image dimension
-    quant_map_fs = prediction.cpu().detach().numpy()[:, 0]
+    quant_map_fs = outputs.cpu().detach().numpy()[:, 0]
     quant_map_fs = quant_map_fs.T
     quant_map_fs = np.reshape(quant_map_fs, (c_acq_data, w_acq_data), order='F')
 
-    quant_map_ksw = prediction.cpu().detach().numpy()[:, 1]
+    quant_map_ksw = outputs.cpu().detach().numpy()[:, 1]
     quant_map_ksw = quant_map_ksw.T
     quant_map_ksw = np.reshape(quant_map_ksw, (c_acq_data, w_acq_data), order='F')
 
     quant_maps = {'fs': quant_map_fs, 'ksw': quant_map_ksw}
 
+    return quant_maps
+
+def save_and_plot_results(quant_maps, output_folder):
+    """Save quantitative maps and generate plots."""
     # Saving output maps
     out_fn = 'nn_reco_maps_clinical.mat'
-    out_fn = os.path.join(output_f, out_fn)
+    out_fn = os.path.join(output_folder, out_fn)
     sio.savemat(out_fn, quant_maps)
+    # load mask from created using dot-product values
+    mask = np.load('dot_prod_example/results/mask_3T.npy')
 
-    # >>> Displaying output maps
-    pdf_fn = 'deep_reco_clinical.pdf'
-    pdf_fn = os.path.join(output_f, pdf_fn)
-    pdf_handle = PdfPages(pdf_fn)
+    pdf_fn = os.path.join(output_folder, 'deep_reco_clinical.pdf')
+    with PdfPages(pdf_fn) as pdf:
+        plt.figure(figsize=(10, 5))
+        # [L-arg] (mM)
+        plt.subplot(121)
+        plt.imshow(quant_maps['fs']*mask, cmap=b_viridis, clim=(0, 120))
+        plt.colorbar(ticks=np.arange(0, 121, 20), fraction=0.046, pad=0.04)
+        plt.title('[L-arg] (mM)')
+        plt.axis("off")
+        # ksw (Hz)
+        plt.subplot(122)
+        plt.imshow(quant_maps['ksw']*mask, cmap='magma', clim=(0, 500))
+        plt.colorbar(ticks=np.arange(0, 501, 100), fraction=0.046, pad=0.04)
+        plt.title('ksw (Hz)')
+        plt.axis("off")
+        plt.tight_layout()
+        pdf.savefig()
 
-    plt.figure(figsize=(10,5))
-    plt.subplot(121)
-    plt.imshow(quant_map_fs * 110e3 / 3 * mask, cmap=b_viridis, clim=(0, 120))
-    plt.title('[L-arg] (mM)', fontsize=20)
-    cb = plt.colorbar(ticks=np.arange(0.0, 120+20, 20), orientation='vertical', fraction=0.046, pad=0.04)
-    cb.ax.tick_params(labelsize=20)
-    plt.axis("off")
+def generate_dict(cfg):
+    yaml_fn = cfg['yaml_fn']
+    seq_fn = cfg['seq_fn'] 
+    dict_fn = cfg['dict_fn']
 
-    plt.subplot(122)
-    plt.imshow(quant_map_ksw * mask, cmap='magma', clim=(0, 1400))
-    cb = plt.colorbar(ticks=np.arange(0.0, 1400+100, 100), orientation='vertical', fraction=0.046, pad=0.04)
-    cb.ax.tick_params(labelsize=20)
-    plt.axis("off")
-    plt.title('k$_{sw}$ (Hz)', fontsize=20)
+    yaml_fn = os.path.join(FOLDER, yaml_fn)
+    seq_fn = os.path.join(FOLDER, seq_fn)
+    dict_fn = os.path.join(FOLDER, dict_fn)
 
-    plt.tight_layout()
-    # plt.show() # for screen display
-    pdf_handle.savefig() # storing to pdf instead of display on screen
+    start = time.perf_counter()
+    dictionary = generate_mrf_cest_dictionary(seq_fn=seq_fn, param_fn=yaml_fn, dict_fn=dict_fn, num_workers=cfg['num_workers'],
+                                    axes='xy')  # axes can also be 'z' if no readout is simulated
+    end = time.perf_counter()
+    s = (end - start)
+    print(f"Dictionary simulation and preparation took {s:.03f} s.")
+    
+    dictionary = preprocess_dict(dictionary)
+    
+    return dictionary
 
-    pdf_handle.close()
+def preprocess_dict(dictionary):
+    """Preprocess the dictionary for dot-matching"""
+    dictionary['sig'] = np.array(dictionary['sig'])
+    for key in dictionary.keys():
+        if key != 'sig':
+            dictionary[key] = np.expand_dims(np.squeeze(np.array(dictionary[key])), 0)
+    print(dictionary['sig'].shape)
+
+    return dictionary
+
+def define_min_max(dictionary):
+     # load the data and define range for normalization
+    min_fs = np.min(dictionary['fs_0'])
+    min_ksw = np.min(dictionary['ksw_0'].transpose().astype(np.float))
+    max_fs = np.max(dictionary['fs_0'])
+    max_ksw = np.max(dictionary['ksw_0'].transpose().astype(np.float))
+
+    min_param_tensor = torch.tensor(np.hstack((min_fs, min_ksw)), requires_grad=False)
+    max_param_tensor = torch.tensor(np.hstack((max_fs, max_ksw)), requires_grad=False)
+
+    return min_param_tensor, max_param_tensor
 
 if __name__ == '__main__':
     main()
