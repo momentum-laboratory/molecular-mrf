@@ -32,7 +32,7 @@ def main():
     # Training properties
     learning_rate = 0.0003
     batch_size = 512
-    num_epochs = 2
+    num_epochs = 100
     noise_std = 0.002  # noise level for training
 
     patience = 10  # number of epochs to wait before early stopping
@@ -193,18 +193,21 @@ def save_and_plot_results(quant_maps, output_folder):
     out_fn = os.path.join(output_folder, out_fn)
     sio.savemat(out_fn, quant_maps)
 
+    # load mask from created using dot-product values
+    mask = np.load('dot_prod_example/mask.npy')
+
     pdf_fn = os.path.join(output_folder, 'deep_reco_preclinical.pdf')
     with PdfPages(pdf_fn) as pdf:
         plt.figure(figsize=(10, 5))
         # [L-arg] (mM)
         plt.subplot(121)
-        plt.imshow(quant_maps['fs'], cmap=b_viridis, clim=(0, 120))
+        plt.imshow(quant_maps['fs']*mask, cmap=b_viridis, clim=(0, 120))
         plt.colorbar(ticks=np.arange(0, 121, 20), fraction=0.046, pad=0.04)
         plt.title('[L-arg] (mM)')
         plt.axis("off")
         # ksw (Hz)
         plt.subplot(122)
-        plt.imshow(quant_maps['ksw'], cmap='magma', clim=(0, 500))
+        plt.imshow(quant_maps['ksw']*mask, cmap='magma', clim=(0, 500))
         plt.colorbar(ticks=np.arange(0, 501, 100), fraction=0.046, pad=0.04)
         plt.title('ksw (Hz)')
         plt.axis("off")
