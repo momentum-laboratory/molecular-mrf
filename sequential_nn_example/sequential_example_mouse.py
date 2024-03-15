@@ -58,9 +58,6 @@ def main():
     device = initialize_device()
     print(f"Using device: {device}")
     
-    # Proceed with other initializations and configurations as in your original code
-    # Call the functions defined above when appropriate
-    
     seq_defs = write_seq_defs(cfg)  
 
     write_sequence(seq_defs, os.path.join(FOLDER, cfg['seq_fn']))
