@@ -80,9 +80,9 @@ def visualize_and_save_results(quant_maps, output_f, mask):
     fig, axes = plt.subplots(1, 3, figsize=(30, 25))
     color_maps = [b_viridis, 'magma', 'magma']
     data_keys = ['fs', 'ksw', 'dp']
-    titles = ['[L-arg] (mM)', 'ksw (Hz)', 'Dot product']
+    titles = ['[L-arg] (mM)', 'k$_{sw}$ (s$^{-1}$)', 'Dot product']
     clim_list = [(0, 120), (0, 1400), (0.999, 1)]
-    tick_list = [np.arange(0, 140, 20), np.arange(0, 1500, 100), np.arange(0.999, 1.0005, 0.0005)]
+    tick_list = [np.arange(0, 140, 20), np.arange(0, 1500, 200), np.arange(0.999, 1.0005, 0.0005)]
 
     for ax, color_map, key, title, clim, ticks in zip(axes.flat, color_maps, data_keys, titles, clim_list, tick_list):
         vals = quant_maps[key] * (key == 'fs' and 110e3/3 or 1) * mask
@@ -108,8 +108,10 @@ def preprocess_dict(dictionary):
     return dictionary
 
 def main():
-    data_f = r'dot_prod_example/data'
-    output_f = r'dot_prod_example/results'
+    # data_f = r'dot_prod_example/data'
+    # output_f = r'dot_prod_example/results'
+    data_f = r'data'
+    output_f = r'results'
 
     cfg = ConfigClinical().get_config()
     write_yaml_dict(cfg, cfg['yaml_fn'])
@@ -120,10 +122,7 @@ def main():
     write_sequence_clinical(seq_defs, cfg['seq_fn'], lims, type='simulation')
 
     # Dictionary generation
-    start = time.perf_counter()
     dictionary = generate_mrf_cest_dictionary(seq_fn=cfg['seq_fn'], param_fn=cfg['yaml_fn'], dict_fn=cfg['dict_fn'], num_workers=cfg['num_workers'], axes='xy')
-    print(f"Dictionary simulation and preparation took {time.perf_counter() - start:.03f} s.")
-
     dictionary = preprocess_dict(dictionary)
 
     # Load and preprocess image data
