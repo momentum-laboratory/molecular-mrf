@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import numpy as np
 import scipy.io as sio
@@ -8,6 +9,11 @@ from matplotlib.backends.backend_pdf import PdfPages
 from cest_mrf.write_scenario import write_yaml_dict
 from cest_mrf.dictionary.generation import generate_mrf_cest_dictionary
 from cest_mrf.metrics.dot_product import dot_prod_matching
+
+# Add the parent directory to sys.path to find the utils package
+module_path = os.path.abspath(os.path.join('..')) 
+if module_path not in sys.path:
+    sys.path.append(module_path)
 
 from utils.colormaps import b_viridis
 
@@ -57,7 +63,7 @@ def visualize_and_save_results(quant_maps, output_f):
     fig, axes = plt.subplots(1, 3, figsize=(30, 25))
     color_maps = [b_viridis, 'magma', 'magma']
     data_keys = ['fs', 'ksw', 'dp']
-    titles = ['[L-arg] (mM)', 'ksw (Hz)', 'Dot product']
+    titles = ['[L-arg] (mM)', 'k$_{sw}$ (s$^{-1}$)', 'Dot product']
     clim_list = [(0, 120), (0, 500), (0.999, 1)]
     tick_list = [np.arange(0, 140, 20), np.arange(0, 600, 100), np.arange(0.999, 1.0005, 0.0005)]
 
@@ -69,14 +75,17 @@ def visualize_and_save_results(quant_maps, output_f):
         cb = plt.colorbar(plot, ax=ax, ticks=ticks, orientation='vertical', fraction=0.046, pad=0.04)
         cb.ax.tick_params(labelsize=25)
         ax.set_axis_off()
-    
+
     with PdfPages(pdf_fn) as pdf:
         pdf.savefig(fig)
+        print("Resulting plots saved as PDF")
         plt.close()
 
 def main():
-    data_f = r'dot_prod_example/data'
-    output_f = r'dot_prod_example/results'
+    # data_f = r'dot_prod_example/data'
+    # output_f = r'dot_prod_example/results'
+    data_f = r'data'
+    output_f = r'results'
     
     cfg = ConfigPreclinical().get_config()
 
