@@ -223,13 +223,9 @@ def generate_dict(cfg):
     seq_fn = os.path.join(FOLDER, seq_fn)
     dict_fn = os.path.join(FOLDER, dict_fn)
 
-    start = time.perf_counter()
     dictionary = generate_mrf_cest_dictionary(seq_fn=seq_fn, param_fn=yaml_fn, dict_fn=dict_fn, num_workers=cfg['num_workers'],
                                     axes='xy')  # axes can also be 'z' if no readout is simulated
-    end = time.perf_counter()
-    s = (end - start)
-    print(f"Dictionary simulation and preparation took {s:.03f} s.")
-    
+
     dictionary = preprocess_dict(dictionary)
     
     return dictionary

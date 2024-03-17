@@ -95,9 +95,7 @@ def main():
     write_sequence_preclinical(seq_defs=seq_defs, seq_fn=cfg['seq_fn'])
 
     # Dictionary generation
-    start_time = time.perf_counter()
     generate_mrf_cest_dictionary(seq_fn=cfg['seq_fn'], param_fn=cfg['yaml_fn'], dict_fn=cfg['dict_fn'], num_workers=cfg['num_workers'], axes='xy')
-    print(f"Dictionary simulation and preparation took {time.perf_counter() - start_time:.03f} s.")
 
     # Dot product matching and quant map generation
     start_time = time.perf_counter()
