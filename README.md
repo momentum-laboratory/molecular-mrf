@@ -58,6 +58,6 @@ python -m dot_prod_example.clinical
 
 `sequential_nn_example` offers an example of implementing sequential neural-network CEST MRF quantification by utilizing additional information such as T1/T2 maps. It includes .seq, .yaml files, dictionary generation, network training, and inference applied to Iohexol data and MT mouse data. It features `iohexenol.ipynb` (Iohexol 4.7T data) and `mouse.ipynb` (Mouse MT 9.4T data) along with corresponding .py files. 
 
-`human_example` is an example of neural-network quantification inference on clinical human data. It includes `drone.ipynb` along with the corresponding .py file. 
+`human_example` is an example of neural-network quantification inference on clinical human data. It includes `inference.ipynb` along with the corresponding .py file. 
 
 `metrics_example` demonstrates the use of the Monte Carlo and the Cramer Rao Bound for assessing the encoding capability of MRF acquisition schedules. It includes `monte_carlo.ipynb` and `crlb.ipynb`.
