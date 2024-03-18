@@ -15,10 +15,9 @@ from cest_mrf.write_scenario import write_yaml_dict
 from cest_mrf.dictionary.generation import generate_mrf_cest_dictionary
 from cest_mrf.metrics.dot_product import dot_prod_matching
 
-FOLDER = os.path.dirname(os.path.realpath(__file__))
 
 def setup_sequence_definitions(cfg):
-    """ Setup the sequence definitions based on configuration."""
+    """ Set up the sequence definitions based on configuration."""
     seq_defs = {
         'n_pulses': 1,  # number of pulses
         'tp': 3,  # pulse duration [s]
@@ -48,7 +47,7 @@ def generate_quant_maps(data_f, dict_fn):
 
 
 def visualize_and_save_results(quant_maps, output_f):
-    """Visualize quant maps and save them as PDF."""
+    """Visualize quant maps and save them as eps."""
     os.makedirs(output_f, exist_ok=True)
 
     mat_fn = os.path.join(output_f, 'quant_maps.mat')
@@ -56,7 +55,7 @@ def visualize_and_save_results(quant_maps, output_f):
     print('quant_maps.mat saved')
 
     mask = quant_maps['dp'] > 0.99974
-    mask_fn = os.path.join(FOLDER, 'mask.npy')
+    mask_fn = 'mask.npy'
     np.save(mask_fn, mask)
 
     fig_fn = os.path.join(output_f, 'dot_product_results.eps')
@@ -83,27 +82,23 @@ def visualize_and_save_results(quant_maps, output_f):
 
 
 def main():
-    data_f = os.path.join(FOLDER, 'data')
-    output_f = os.path.join(FOLDER, 'results')
+    data_f = 'data'
+    output_f = 'results'
 
     cfg = ConfigPreclinical().get_config()
 
-    seq_fn = os.path.join(FOLDER, cfg['seq_fn'])
-    yaml_fn = os.path.join(FOLDER, cfg['yaml_fn'])
-    dict_fn = os.path.join(FOLDER, cfg['dict_fn'])
-
     # Write configuration and sequence files
-    write_yaml_dict(cfg, yaml_fn)
+    write_yaml_dict(cfg, cfg['yaml_fn'])
     seq_defs = setup_sequence_definitions(cfg)
-    write_sequence_preclinical(seq_defs=seq_defs, seq_fn=seq_fn)
+    write_sequence_preclinical(seq_defs=seq_defs, seq_fn=cfg['seq_fn'])
 
     # Dictionary generation
-    dictionary = generate_mrf_cest_dictionary(seq_fn=seq_fn, param_fn=yaml_fn, dict_fn=dict_fn,
+    dictionary = generate_mrf_cest_dictionary(seq_fn=cfg['seq_fn'], param_fn=cfg['yaml_fn'], dict_fn=cfg['dict_fn'],
                                  num_workers=cfg['num_workers'], axes='xy')
 
     # Dot product matching and quant map generation
     start_time = time.perf_counter()
-    quant_maps = generate_quant_maps(data_f, dict_fn)
+    quant_maps = generate_quant_maps(data_f, cfg['dict_fn'])
     print(f"Dot product matching took {time.perf_counter() - start_time:.03f} s.")
 
     # Visualization and saving results
@@ -111,4 +106,5 @@ def main():
 
 
 if __name__ == '__main__':
+    os.chdir(os.path.dirname(os.path.realpath(__file__)))
     main()
