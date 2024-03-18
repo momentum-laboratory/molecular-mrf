@@ -17,7 +17,7 @@ from cest_mrf.metrics.dot_product import dot_prod_matching
 
 
 def setup_sequence_definitions(cfg):
-    """ Set up the sequence definitions based on configuration."""
+    """Set up the sequence definitions based on configuration."""
     seq_defs = {
         'n_pulses': 1,  # number of pulses
         'tp': 3,  # pulse duration [s]
@@ -88,7 +88,7 @@ def main():
     cfg = ConfigPreclinical().get_config()
 
     # Write configuration and sequence files
-    write_yaml_dict(cfg, cfg['yaml_fn'])
+    write_yaml_dict(cfg)
     seq_defs = setup_sequence_definitions(cfg)
     write_sequence_preclinical(seq_defs=seq_defs, seq_fn=cfg['seq_fn'])
 
