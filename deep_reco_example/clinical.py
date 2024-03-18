@@ -52,7 +52,7 @@ def main():
     optimizer = torch.optim.Adam(reco_net.parameters(), lr=learning_rate)
     reco_net = train_network(train_loader, reco_net, optimizer, device, learning_rate, num_epochs, noise_std, min_param_tensor, max_param_tensor, patience, min_delta)
     
-    data_fn = os.path.join(data_folder, 'dataToMatch_30_126_88_slice75.mat')
+    data_fn = os.path.join(data_folder, 'acquired_data3T.mat')
     eval_data, c_acq_data, w_acq_data = load_and_preprocess_data(data_fn, sig_n)
     quant_maps = evaluate_network(reco_net, eval_data, device, min_param_tensor, max_param_tensor, c_acq_data=c_acq_data, w_acq_data=w_acq_data)
 
@@ -61,7 +61,7 @@ def main():
 
 def load_and_preprocess_data(data_fn, sig_n):
     acquired_data = sio.loadmat(data_fn)['dataToMatch'].astype(np.float)
-    acquired_data = acquired_data[:,19:-19,:]
+    acquired_data = acquired_data[:,19:-19,:] #just to zoom in
     _, c_acq_data, w_acq_data = np.shape(acquired_data)
 
     # Reshaping the acquired data to the shape expected by the NN (e.g. 30 x ... )
