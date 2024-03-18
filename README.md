@@ -60,4 +60,4 @@ python -m dot_prod_example.clinical
 
 `human_example` is an example of neural-network quantification inference on clinical human data. It includes `drone.ipynb` along with the corresponding .py file. 
 
-`metrics_example` demonstrates the use of the Monte Carlo and the Cramer Rao Bound for assessing the encoding capability of MRF acquisition schedules. It includes `monte_carlo.ipynb` and `crlb.ipynb`, along with the corresponding .py files.
+`metrics_example` demonstrates the use of the Monte Carlo and the Cramer Rao Bound for assessing the encoding capability of MRF acquisition schedules. It includes `monte_carlo.ipynb` and `crlb.ipynb`
