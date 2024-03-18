@@ -617,9 +617,9 @@ bool ExternalSequence::load(std::string path)
 	}
 	std::vector<double> def = GetDefinition("Scan_ID");
 	int scanID = def.empty() ? 0: (int)def[0];
-	print_msg(NORMAL_MSG, std::ostringstream().flush() << "==========================================" );
-	print_msg(NORMAL_MSG, std::ostringstream().flush() << "===== EXTERNAL SEQUENCE #" << std::setw(5) << scanID << " ===========" );
-	print_msg(NORMAL_MSG, std::ostringstream().flush() << "==========================================" );
+	print_msg(DEBUG_HIGH_LEVEL, std::ostringstream().flush() << "==========================================" );
+	print_msg(DEBUG_HIGH_LEVEL, std::ostringstream().flush() << "===== EXTERNAL SEQUENCE #" << std::setw(5) << scanID << " ===========" );
+	print_msg(DEBUG_HIGH_LEVEL, std::ostringstream().flush() << "==========================================" );
 
 	return true;
 };

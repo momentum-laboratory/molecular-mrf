@@ -10,6 +10,8 @@ from ..simulation.simulate import simulate_mrf
 import math
 from scipy.io import savemat
 
+import tqdm
+
 def check_dict(dict_):
     # Even single value must be an array to get the next code working
     for k, v in dict_['variables'].items():
@@ -17,6 +19,7 @@ def check_dict(dict_):
             v = [v]
             dict_['variables'][k] = v
     return dict_
+
 
 def prepare_dictionary(dict_, equals=None):
     # generate unique combination
@@ -92,8 +95,10 @@ def generate_mrf_cest_dictionary(seq_fn=None,
         dictionary = dictionary['variables']
         print(f"Found {num_comb} different parameter combinations.")
 
+    print('Dictionary generation started. Please wait...')
 
     if num_workers > 1 and num_comb > num_workers:
+        pbar = tqdm.tqdm(total=num_comb)
         # Divide dict to dicts for multithreading
         dicts = []
         # Iterate over the keys in the dictionary
@@ -120,10 +125,15 @@ def generate_mrf_cest_dictionary(seq_fn=None,
                     sim_params, signal, id_num = future.result()
                 except Exception as exc:
                     print(f' generated an exception: {exc}')
+                    raise exc
                 else:
-                    print(f'Future {id_num} is finished')
+                    # print(f'Future {id_num} is finished')
+                    pbar.update(len(signal))
+                    pbar.set_description(f'CPU thread #{id_num} is finished')
                     signals[id_num] = signal
+
         end = time.perf_counter()
+        pbar.close()
         s = (end-start)
         print(f"Dictionary simulation took {s:.03f} s.")
 

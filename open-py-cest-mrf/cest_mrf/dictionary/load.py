@@ -59,7 +59,7 @@ def read_mrf_simulation_params(yaml_fn):
 
 
     else:
-        print('No CEST pools found in param files! specify with "cest_pool"')
+        print('No CEST pools found in param files! specify with "cest_pool" if needed')
 
     # MT pool
     if 'mt_pool' in params:
@@ -80,7 +80,7 @@ def read_mrf_simulation_params(yaml_fn):
         dict_['variables']['lmm'] = mt['lineshape']
 
     else:
-        print('No MT pools found in param files! specify with "mt_pool"')
+        print('No MT pools found in param files! specify with "mt_pool" if needed')
 
     # scanner parameters
     if 'b0' not in params or 'gamma' not in params:
