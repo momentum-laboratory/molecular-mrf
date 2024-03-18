@@ -48,18 +48,16 @@ Some folders may contain a `visualization.ipynb` file that recreates the origina
 
 To run .py examples you have to treat the repo as a package, e.g. (run it in **the root folder**):
 ```
-python -m dot_prod_example.dp_preclinical
-python -m dot_prod_example.dp_clinical
+python -m dot_prod_example.preclinical
+python -m dot_prod_example.clinical
 ```
 
-`dot_prod_example` demonstrates how to perform dot product matching using L-arginine phantom data. It includes .seq, .yaml, and MRF dictionary generation. This example should be run first before proceeding to `deep_reco_example` as it uses DP-generated masks. It includes `dp_clinical.ipynb` (L-arg 3T data) and `dp_preclinical.ipynb (L-arg 9.4T data)`, along with the corresponding .py files. 
+`dot_prod_example` demonstrates how to perform dot product matching using L-arginine phantom data. It includes .seq, .yaml, and MRF dictionary generation. This example should be run first before proceeding to `deep_reco_example` as it uses DP-generated masks. It includes `clinical.ipynb` (L-arg 3T data) and `preclinical.ipynb (L-arg 9.4T data)`, along with the corresponding .py files. 
 
-`deep_reco_example` showcases quantification using deep learning, including a .yaml file, MRF dictionary generation, network training, and inference. It includes `deep_reco_clinical.ipynb` (L-arg 3T data) and `deep_reco_preclinical.ipynb` (L-arg 9.4T data), as well as the corresponding .py files. 
+`deep_reco_example` showcases quantification using deep learning, including a .yaml file, MRF dictionary generation, network training, and inference. It includes `clinical.ipynb` (L-arg 3T data) and `preclinical.ipynb` (L-arg 9.4T data), as well as the corresponding .py files. 
 
-`sequential_nn_example` offers an example of implementing sequential neural-network CEST MRF quantification by utilizing additional information such as T1/T2 maps. It includes .seq, .yaml files, dictionary generation, network training, and inference applied to Iohexol data and MT mouse data. It features `sequential_example_iohexenol.ipynb` (Iohexol 4.7T data) and `sequential_example_iohexenol.ipynb` (Mouse MT 9.4T data) along with corresponding .py files. 
+`sequential_nn_example` offers an example of implementing sequential neural-network CEST MRF quantification by utilizing additional information such as T1/T2 maps. It includes .seq, .yaml files, dictionary generation, network training, and inference applied to Iohexol data and MT mouse data. It features `iohexenol.ipynb` (Iohexol 4.7T data) and `mouse.ipynb` (Mouse MT 9.4T data) along with corresponding .py files. 
 
-`human_example` is an example of neural-network quantification inference on clinical human data. It includes `drone_example.ipynb` along with the corresponding .py file. 
-
-`sequential_nn_example` offers an example of implementing sequential neural-network CEST MRF quantification by utilizing additional information such as T1/T2 maps. This includes .seq, .yaml files, dictionary generation, and network training and testing on Iohexol data and MT mouse data. It features `sequential_example_iohexenol.ipynb` (Iohexol 4.7T data) and `sequential_example_iohexenol.ipynb` (Mouse MR 9.4T data) along with corresponding .py files.
+`human_example` is an example of neural-network quantification inference on clinical human data. It includes `drone.ipynb` along with the corresponding .py file. 
 
 `metrics_example` demonstrates the use of the Monte Carlo and the Cramer Rao Bound for assessing the encoding capability of MRF acquisition schedules. It includes `monte_carlo.ipynb` and `crlb.ipynb`, along with the corresponding .py files.
