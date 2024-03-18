@@ -12,7 +12,8 @@ __pycache__/
 *.egg
 *egg*
 
-deep_reco_example/*.pt
+*/results/*
+*.pt
 
 dict*.mat
 
