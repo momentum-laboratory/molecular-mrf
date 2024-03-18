@@ -237,7 +237,7 @@ def train_network(train_loader, device, sched_iter, learning_rate, num_epochs, n
         if patience_counter > patience:
             print('Early stopping!')
             break
-
+    pbar.close()
     print(f"Training took {time.time() - t0:.2f} seconds")
 
     torch.save({
@@ -245,7 +245,7 @@ def train_network(train_loader, device, sched_iter, learning_rate, num_epochs, n
         'optimizer_state_dict': optimizer.state_dict(),  #
         'loss_per_epoch': loss_per_epoch,
         'loss_per_epoch_test': loss_per_epoch_test
-    }, 'checkpoint_m')
+    }, 'checkpoint_m.pt')
 
     return reco_net
 

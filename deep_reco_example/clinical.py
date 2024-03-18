@@ -150,7 +150,7 @@ def train_network(train_loader, reco_net, optimizer, device, learning_rate, num_
         if patience_counter > patience:
             print('Early stopping!')
             break
-
+    pbar.close()
     print(f"Training took {time.time() - t0:.2f} seconds")
 
     torch.save({
