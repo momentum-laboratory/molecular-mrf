@@ -1,10 +1,7 @@
 import os
 import time
 import torch
-import torch.nn as nn
-import torch.optim as optim
 from torch.utils.data import DataLoader
-from torch.autograd import Variable
 import numpy as np
 import scipy.io as sio
 from matplotlib import pyplot as plt
@@ -13,7 +10,6 @@ import tqdm
 
 from cest_mrf.write_scenario import write_yaml_dict
 from cest_mrf.dictionary.generation import generate_mrf_cest_dictionary
-from cest_mrf.metrics.dot_product import  dot_prod_matching
 
 from utils.normalization import normalize_range, un_normalize_range
 from utils.colormaps import b_viridis
@@ -22,7 +18,14 @@ from deep_reco_example.dataset import DatasetMRF
 from deep_reco_example.model import Network
 from deep_reco_example.configs import ConfigClinical
 
-FOLDER = 'deep_reco_example'
+import sys
+# Add the parent directory to sys.path to find the utils package
+module_path = os.path.abspath(os.path.join('..'))
+if module_path not in sys.path:
+    sys.path.append(module_path)
+
+#FOLDER = 'deep_reco_example'
+FOLDER = ''
 
 def main():
     # Schedule iteration (signal dimension)
@@ -195,7 +198,8 @@ def save_and_plot_results(quant_maps, output_folder):
     out_fn = os.path.join(output_folder, out_fn)
     sio.savemat(out_fn, quant_maps)
     # load mask from created using dot-product values
-    mask = np.load('dot_prod_example/results/mask_3T.npy')
+    mask = np.load('../dot_prod_example/results/mask_3T.npy')
+    # mask = np.load(os.path.join(FOLDER, output_folder, 'mask_3T.npy'))
 
     pdf_fn = os.path.join(output_folder, 'deep_reco_clinical.pdf')
     with PdfPages(pdf_fn) as pdf:
@@ -210,7 +214,7 @@ def save_and_plot_results(quant_maps, output_folder):
         plt.subplot(122)
         plt.imshow(quant_maps['ksw']*mask, cmap='magma', clim=(0, 500))
         plt.colorbar(ticks=np.arange(0, 501, 100), fraction=0.046, pad=0.04)
-        plt.title('ksw (Hz)')
+        plt.title('k$_{sw}$ (s$^{-1}$)')
         plt.axis("off")
         plt.tight_layout()
         pdf.savefig()
