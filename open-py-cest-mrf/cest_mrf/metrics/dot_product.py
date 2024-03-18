@@ -31,8 +31,8 @@ def dot_prod_indexes(synt_sig, acquired_data, batch_size:int = 256, restrict:Dic
     dp = np.zeros((1, n_raw_data))
     dp_indexes = np.zeros((1, n_raw_data))
 
-    norm_dict = synt_sig / (la.norm(synt_sig, axis=0) + 1e-5)
-    norm_data = data / (la.norm(data, axis=0) + 1e-5)
+    norm_dict = synt_sig / (la.norm(synt_sig, axis=0) + 1e-10)
+    norm_data = data / (la.norm(data, axis=0) + 1e-10)
 
     assert norm_data.shape[1] % batch_size == 0, "The number of image pixels must be divisible by batch_size"
 
@@ -123,8 +123,8 @@ def dot_prod_matching(dictionary = None, acquired_data = None, dict_fn = None, a
 
     # 2 - norm normalization
     # equivalent to normc in matlab
-    norm_dict = synt_sig / (la.norm(synt_sig, axis=0) + 1e-5)
-    norm_data = data / (la.norm(data, axis=0) + 1e-5)
+    norm_dict = synt_sig / (la.norm(synt_sig, axis=0) + 1e-10)
+    norm_data = data / (la.norm(data, axis=0) + 1e-10)
 
     # Matching in batches due to memory considerations
     # The number of image pixel needs to be dividable by batch_size
