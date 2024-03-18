@@ -11,6 +11,9 @@ __pycache__/
 *.so
 *.egg
 *egg*
+*.pt
+
+dict*.mat
 
 open-py-cest-mrf/cest_mrf/pypulseq
 
