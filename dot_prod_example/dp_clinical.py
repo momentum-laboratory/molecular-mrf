@@ -15,8 +15,9 @@ from cest_mrf.write_scenario import write_yaml_dict
 from cest_mrf.dictionary.generation import generate_mrf_cest_dictionary
 from cest_mrf.metrics.dot_product import dot_prod_matching
 
+
 def setup_sequence_definitions(cfg, b1):
-    """Setup the sequence definitions based on B1 values and configuration."""
+    """ set up the sequence definitions based on B1 values and configuration."""
     num_meas = len(b1)
     seq_defs = {
         "n_pulses": 13,
@@ -41,6 +42,7 @@ def setup_sequence_definitions(cfg, b1):
 
     return seq_defs, lims
 
+
 def create_scanner_limits(cfg):
     """Create scanner limits object."""
     return pp.Opts(
@@ -51,14 +53,16 @@ def create_scanner_limits(cfg):
         rf_ringdown_time=30e-6,
         rf_dead_time=100e-6,
         rf_raster_time=1e-6,
-        gamma=cfg['gamma']/2/np.pi*1e6,
+        gamma=cfg['gamma'] / 2 / np.pi * 1e6,
     )
+
 
 def preprocess_image(data_f, file_name):
     """Load and preprocess the image data."""
     data_fn = os.path.join(data_f, file_name)
     img = sio.loadmat(data_fn)['dataToMatch']
     return np.nan_to_num(img)[:, 19:-19, :]
+
 
 def apply_masks(quant_maps, output_f):
     """Apply different masks based on quant_map criteria and save them."""
@@ -71,6 +75,7 @@ def apply_masks(quant_maps, output_f):
     np.save(os.path.join(output_f, 'mask_ksw_3T.npy'), mask_ksw)
     np.save(os.path.join(output_f, 'mask_fs_3T.npy'), mask_fs)
     np.save(os.path.join(output_f, 'mask_3T.npy'), mask)
+
 
 def visualize_and_save_results(quant_maps, output_f, mask):
     """Visualize quant maps, apply mask, and save as PDF."""
@@ -85,7 +90,7 @@ def visualize_and_save_results(quant_maps, output_f, mask):
     tick_list = [np.arange(0, 140, 20), np.arange(0, 1500, 200), np.arange(0.999, 1.0005, 0.0005)]
 
     for ax, color_map, key, title, clim, ticks in zip(axes.flat, color_maps, data_keys, titles, clim_list, tick_list):
-        vals = quant_maps[key] * (key == 'fs' and 110e3/3 or 1) * mask
+        vals = quant_maps[key] * (key == 'fs' and 110e3 / 3 or 1) * mask
         plot = ax.imshow(vals, cmap=color_map)
         plot.set_clim(*clim)
         ax.set_title(title, fontsize=25)
@@ -97,6 +102,7 @@ def visualize_and_save_results(quant_maps, output_f, mask):
         pdf.savefig(fig)
         plt.close()
 
+
 def preprocess_dict(dictionary):
     """Preprocess the dictionary for dot-matching"""
     dictionary['sig'] = np.array(dictionary['sig'])
@@ -106,6 +112,7 @@ def preprocess_dict(dictionary):
     print(dictionary['sig'].shape)
 
     return dictionary
+
 
 def main():
     # data_f = r'dot_prod_example/data'
@@ -117,18 +124,20 @@ def main():
     write_yaml_dict(cfg, cfg['yaml_fn'])
 
     # Write sequence file
-    b1_values = [2, 2, 1.7, 1.5, 1.2, 1.2, 3, 0.5, 3, 1, 2.2, 3.2, 1.5, 0.7, 1.5, 2.2, 2.5, 1.2, 3, 0.2, 1.5, 2.5, 0.7, 4, 3.2, 3.5, 1.5, 2.7, 0.7, 0.5]
+    b1_values = [2, 2, 1.7, 1.5, 1.2, 1.2, 3, 0.5, 3, 1, 2.2, 3.2, 1.5, 0.7, 1.5, 2.2, 2.5, 1.2, 3, 0.2, 1.5, 2.5, 0.7,
+                 4, 3.2, 3.5, 1.5, 2.7, 0.7, 0.5]
     seq_defs, lims = setup_sequence_definitions(cfg, b1_values)
     write_sequence_clinical(seq_defs, cfg['seq_fn'], lims, type='simulation')
 
     # Dictionary generation
-    dictionary = generate_mrf_cest_dictionary(seq_fn=cfg['seq_fn'], param_fn=cfg['yaml_fn'], dict_fn=cfg['dict_fn'], num_workers=cfg['num_workers'], axes='xy')
+    dictionary = generate_mrf_cest_dictionary(seq_fn=cfg['seq_fn'], param_fn=cfg['yaml_fn'], dict_fn=cfg['dict_fn'],
+                                              num_workers=cfg['num_workers'], axes='xy')
     dictionary = preprocess_dict(dictionary)
 
     # Load and preprocess image data
     img = preprocess_image(data_f, 'dataToMatch_30_126_88_slice75.mat')
     start = time.perf_counter()
-    quant_maps = dot_prod_matching(dictionary=dictionary, acquired_data=img, batch_size=img.shape[1]*2)
+    quant_maps = dot_prod_matching(dictionary=dictionary, acquired_data=img, batch_size=img.shape[1] * 2)
     print(f"Dot product matching took {time.perf_counter() - start:.03f} s.")
 
     out_fn = 'quant_maps_3T.mat'
@@ -139,6 +148,7 @@ def main():
     # Visualize and save results
     mask = np.load(os.path.join(output_f, 'mask_3T.npy'))
     visualize_and_save_results(quant_maps, output_f, mask)
+
 
 if __name__ == "__main__":
     main()

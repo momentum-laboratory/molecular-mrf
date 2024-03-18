@@ -1,11 +1,10 @@
 import torch
-import torch.nn as nn
 import numpy as np
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
 
 import time
 import os
-import sys
+# import sys
 
 import scipy.io as sio
 import matplotlib.pyplot as plt
@@ -13,7 +12,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 
 import tqdm
 
-from utils.colormaps import b_viridis, b_winter  
+from utils.colormaps import b_viridis, b_winter
 from utils.normalization import normalize_range, un_normalize_range
 
 from sequential_nn_example.configs import ConfigIohexol
@@ -23,11 +22,10 @@ from sequential_nn_example.model import Network
 
 from cest_mrf.write_scenario import write_yaml_dict
 from cest_mrf.dictionary.generation import generate_mrf_cest_dictionary
-from cest_mrf.metrics.dot_product import  dot_prod_matching
 
-import random
+# FOLDER = 'sequential_nn_example'
+FOLDER = ''
 
-FOLDER = 'sequential_nn_example'
 
 def main():
     data_f = 'data'
@@ -35,7 +33,7 @@ def main():
 
     data_f = os.path.join(FOLDER, data_f)
     output_f = os.path.join(FOLDER, output_f)
-    
+
     # Schedule iterations
     # number of raw images in the CEST-MRF acquisition schedule
     sched_iter = 30
@@ -44,51 +42,55 @@ def main():
     learning_rate = 1e-3
     batch_size = 8192
     num_epochs = 150
-    noise_std = 0.002 # noise level for training 10*log10(1/0.0001) = 40 dB
+    noise_std = 0.002  # noise level for training
 
-    min_delta = 0.02 # minimum absolute change in the loss function
-    patience = 300 # number of iterations to wait before early stopping
+    min_delta = 0.02  # minimum absolute change in the loss function
+    patience = 300  # number of iterations to wait before early stopping
 
     set_seed(2024)
-    
+
     cfg = ConfigIohexol().get_config()
     device = initialize_device()
     print(f"Using device: {device}")
-    
-    seq_defs = write_seq_defs(cfg)  
+
+    seq_defs = write_seq_defs(cfg)
     write_sequence(seq_defs, os.path.join(FOLDER, cfg['seq_fn']))
 
     write_yaml_dict(cfg, os.path.join(FOLDER, cfg['yaml_fn']))
 
-    dictionary = generate_dict(cfg)  
+    dictionary = generate_dict(cfg)
     min_param_tensor, max_param_tensor, min_water_t1t2_tensor, max_water_t1t2_tensor = define_min_max(dictionary)
-
 
     # Loading the training dataset
     train_dataset = SequentialDataset(os.path.join(FOLDER, cfg['dict_fn']))
     train_loader = DataLoader(dataset=train_dataset,
-                            batch_size=batch_size,
-                            shuffle=True,
-                            num_workers=4)
+                              batch_size=batch_size,
+                              shuffle=True,
+                              num_workers=4)
 
-    reco_net = train_network(train_loader, device, sched_iter, learning_rate, num_epochs, noise_std, patience, min_delta, min_param_tensor, max_param_tensor, min_water_t1t2_tensor, max_water_t1t2_tensor)
+    reco_net = train_network(train_loader, device, sched_iter, learning_rate, num_epochs, noise_std, patience,
+                             min_delta, min_param_tensor, max_param_tensor, min_water_t1t2_tensor,
+                             max_water_t1t2_tensor)
 
-    acq_data_fns = [r'dataToMatch_20_40_80_cold_107_30.mat', r'dataToMatch_20_80_80_cold_107_30.mat']
-    t12_fns = [r'T1_T2_maps_Iohexol_pH7_20_40_80_Cold/Ground_Truth_Maps.mat', r'T1_T2_maps_Iohexol_20_80_80_cold/Ground_Truth_Maps.mat']
-    mask_fns = [r'Three_ROIs_20_40_80.mat', r'Three_ROIs_20_80_80.mat']
+    acq_data_fns = [r'dataToMatch_20_80_80_cold_107_30.mat']
+    t12_fns = [r'T1_T2_maps_Iohexol_20_80_80_cold/Ground_Truth_Maps.mat']
+    mask_fns = [r'Three_ROIs_20_80_80.mat']
 
     for i, (acq_data_fn, t12_fn, mask_fn) in enumerate(zip(acq_data_fns, t12_fns, mask_fns)):
         acq_data_fn = os.path.join(data_f, acq_data_fn)
         t12_fn = os.path.join(data_f, t12_fn)
         mask_fn = os.path.join(data_f, mask_fn)
 
-        acquired_data, mask, c_acq_data, w_acq_data, acquired_map_t1w_orig, acquired_map_t2w_orig = load_and_preprocess_data(acq_data_fn, t12_fn, mask_fn, sched_iter, device, min_water_t1t2_tensor, max_water_t1t2_tensor)
+        acquired_data, mask, c_acq_data, w_acq_data, acquired_map_t1w_orig, acquired_map_t2w_orig = \
+            (load_and_preprocess_data(acq_data_fn, t12_fn, mask_fn, sched_iter, device,
+                                      min_water_t1t2_tensor, max_water_t1t2_tensor))
 
-        quant_maps = evaluate_network(reco_net, device, acquired_data, min_param_tensor, max_param_tensor, c_acq_data, w_acq_data)
+        quant_maps = evaluate_network(reco_net, device, acquired_data, min_param_tensor, max_param_tensor, c_acq_data,
+                                      w_acq_data)
         quant_maps['t1w'] = acquired_map_t1w_orig * 1000
         quant_maps['t2w'] = acquired_map_t2w_orig * 1000
 
-        save_and_plot_results(quant_maps, i+1, output_f, mask)
+        save_and_plot_results(quant_maps, i + 1, output_f, mask)
 
 
 def set_seed(seed=42):
@@ -101,9 +103,11 @@ def set_seed(seed=42):
     torch.backends.cudnn.benchmark = False
     os.environ["PYTHONHASHSEED"] = str(seed)
 
+
 # Function to initialize device
 def initialize_device():
     return 'cuda' if torch.cuda.is_available() else 'cpu'
+
 
 # Function to write sequence definitions
 def write_seq_defs(cfg):
@@ -121,7 +125,6 @@ def write_seq_defs(cfg):
     seq_defs['num_meas'] = len(seq_defs['offsets_ppm'])  # number of repetition
     seq_defs['Tsat'] = seq_defs['n_pulses'] * (seq_defs['tp'] + seq_defs['td']) - seq_defs['td']
 
-
     seq_defs['B0'] = cfg['b0']  # B0 [T]
 
     seqid = os.path.splitext(cfg['seq_fn'])[1][1:]
@@ -134,6 +137,7 @@ def write_seq_defs(cfg):
 
     return seq_defs
 
+
 def generate_dict(cfg):
     seq_fn = cfg['seq_fn']
     yaml_fn = cfg['yaml_fn']
@@ -144,13 +148,15 @@ def generate_dict(cfg):
     dict_fn = os.path.join(FOLDER, dict_fn)
 
     start = time.perf_counter()
-    dictionary = generate_mrf_cest_dictionary(seq_fn=seq_fn, param_fn=yaml_fn, dict_fn=dict_fn, num_workers=cfg['num_workers'],
-                                    axes='xy')  # axes can also be 'z' if no readout is simulated
+    dictionary = generate_mrf_cest_dictionary(seq_fn=seq_fn, param_fn=yaml_fn, dict_fn=dict_fn,
+                                              num_workers=cfg['num_workers'],
+                                              axes='xy')  # axes can also be 'z' if no readout is simulated
     end = time.perf_counter()
     s = (end - start)
     print(f"Dictionary simulation and preparation took {s:.03f} s.")
 
     return preprocess_dict(dictionary)
+
 
 def preprocess_dict(dictionary):
     """Preprocess the dictionary for dot-matching"""
@@ -164,7 +170,8 @@ def preprocess_dict(dictionary):
 
 
 # Function to train the network
-def train_network(train_loader, device, sched_iter, learning_rate, num_epochs, noise_std, patience, min_delta, min_param_tensor, max_param_tensor, min_water_t1t2_tensor, max_water_t1t2_tensor):
+def train_network(train_loader, device, sched_iter, learning_rate, num_epochs, noise_std, patience, min_delta,
+                  min_param_tensor, max_param_tensor, min_water_t1t2_tensor, max_water_t1t2_tensor):
     # Initializing the reconstruction network
     reco_net = Network(sched_iter, n_hidden=2, n_neurons=300).to(device)
 
@@ -199,15 +206,13 @@ def train_network(train_loader, device, sched_iter, learning_rate, num_epochs, n
 
             # Normalizing the target and input_water_t1t2
             target = normalize_range(original_array=target, original_min=min_param_tensor,
-                                    original_max=max_param_tensor, new_min=0, new_max=1).to(device)
+                                     original_max=max_param_tensor, new_min=0, new_max=1).to(device)
 
             input_water_t1t2 = normalize_range(original_array=input_water_t1t2, original_min=min_water_t1t2_tensor,
-                                            original_max=max_water_t1t2_tensor, new_min=0, new_max=1)
+                                               original_max=max_water_t1t2_tensor, new_min=0, new_max=1)
 
             # Adding noise to the input signals (trajectories) a
             noised_sig = cur_norm_sig + torch.randn(cur_norm_sig.size()) * noise_std
-
-            # noised_sig = noised_sig / torch.linalg.norm(noised_sig, dim=1, ord=2, keepdim=True)
 
             # adding the water_t1t2 input as two additional elements in the noised_sig vector
             noised_sig = torch.hstack((input_water_t1t2, noised_sig))
@@ -230,10 +235,10 @@ def train_network(train_loader, device, sched_iter, learning_rate, num_epochs, n
         # Average loss for this epoch
         loss_per_epoch.append(cum_loss / (counter + 1))
 
-        pbar.set_description(f'Epoch: {epoch+1}/{num_epochs}, Loss = {loss_per_epoch[-1]}')
+        pbar.set_description(f'Epoch: {epoch + 1}/{num_epochs}, Loss = {loss_per_epoch[-1]}')
         pbar.update(1)
 
-        if (min_loss - loss_per_epoch[-1])/min_loss > min_delta:    
+        if (min_loss - loss_per_epoch[-1]) / min_loss > min_delta:
             min_loss = loss_per_epoch[-1]
             patience_counter = 0
         else:
@@ -243,7 +248,6 @@ def train_network(train_loader, device, sched_iter, learning_rate, num_epochs, n
             print('Early stopping!')
             break
 
-        
     print(f"Training took {time.time() - t0:.2f} seconds")
 
     torch.save({
@@ -251,9 +255,10 @@ def train_network(train_loader, device, sched_iter, learning_rate, num_epochs, n
         'optimizer_state_dict': optimizer.state_dict(),  #
         'loss_per_epoch': loss_per_epoch,
         'loss_per_epoch_test': loss_per_epoch_test
-    }, os.path.join(FOLDER,'checkpoint'))
+    }, os.path.join(FOLDER, 'checkpoint'))
 
     return reco_net
+
 
 def evaluate_network(reco_net, device, acquired_data, min_param_tensor, max_param_tensor, c_acq_data, w_acq_data):
     t0 = time.time()
@@ -264,7 +269,7 @@ def evaluate_network(reco_net, device, acquired_data, min_param_tensor, max_para
     prediction = un_normalize_range(prediction, original_min=min_param_tensor.to(device),
                                     original_max=max_param_tensor.to(device), new_min=0, new_max=1)
 
-    print(prediction.shape)
+    # print(prediction.shape)
 
     # mask = np.ones((c_acq_data, w_acq_data))
     quant_maps = {}
@@ -279,33 +284,35 @@ def evaluate_network(reco_net, device, acquired_data, min_param_tensor, max_para
     quant_maps['ksw'] = np.reshape(quant_maps['ksw'], (c_acq_data, w_acq_data), order='F')
 
     return quant_maps
-    
+
+
 def save_and_plot_results(quant_maps, num_of_phantom, output_f, mask):
     # Saving output maps
     os.makedirs(output_f, exist_ok=True)
     sio.savemat(os.path.join(output_f, f'nn_reco_maps_{num_of_phantom}.mat'), quant_maps)
 
-    pdf_fn = 'deep_reco.pdf' # quantitative maps output filename
+    pdf_fn = 'deep_reco.pdf'  # quantitative maps output filename
     pdf_fn = os.path.join(output_f, pdf_fn)
 
     fig, axes = plt.subplots(1, 4, figsize=(30, 10))
 
     color_maps = ['hot', b_winter, b_viridis, 'magma']
     data_keys = ['t1w', 't2w', 'fs', 'ksw']
-    titles = ['T$_{{1w}}$ (ms)','T$_{{2w}}$ (ms)','f$_{s}$ (mM)', 'k$_{sw}$ (Hz)']
-    clim_list = [(0, 3500), (0, 1000),(0, 120), (0, 500)]
+    titles = ['Water T$_{1}$ (ms)', 'Water T$_{2}$ (ms)', '[Iohexol] (mM)', 'k$_{sw}$ (s$^{-1}$)']
+    clim_list = [(0, 3500), (0, 1000), (0, 120), (0, 500)]
     tick_list = [np.arange(0, 4000, 1750), np.arange(0, 1200, 500),
-                np.arange(0, 140, 60), np.arange(0, 600, 250)]
+                 np.arange(0, 140, 60), np.arange(0, 600, 250)]
 
     unified_font_size = 25
 
     # Save the plot to a PDF file
     with PdfPages(pdf_fn) as pdf:
-        for ax, color_map, key, title, clim, ticks in zip(axes.flat, color_maps, data_keys, titles, clim_list, tick_list):
+        for ax, color_map, key, title, clim, ticks in zip(axes.flat, color_maps, data_keys, titles, clim_list,
+                                                          tick_list):
             vals = quant_maps[key]
 
             if key == 'fs':
-                vals = vals * 110e3/2
+                vals = vals * 110e3 / 2
 
             plot = ax.imshow(vals * mask, cmap=color_map)
             plot.set_clim(*clim)
@@ -313,20 +320,21 @@ def save_and_plot_results(quant_maps, num_of_phantom, output_f, mask):
             cb = plt.colorbar(plot, ax=ax, ticks=ticks, orientation='horizontal', fraction=0.036, pad=0.02)
             cb.ax.tick_params(labelsize=unified_font_size)
             ax.set_axis_off()
-        
+
         plt.tight_layout()
 
         plt.subplots_adjust(wspace=0.00091, hspace=0.0001)  # Remove spacing between subplots
 
         pdf.savefig(fig)
-        
 
-def load_and_preprocess_data(acq_data_fn, t12_fn, mask_fn, sched_iter, device, min_water_t1t2_tensor, max_water_t1t2_tensor):
+
+def load_and_preprocess_data(acq_data_fn, t12_fn, mask_fn, sched_iter, device, min_water_t1t2_tensor,
+                             max_water_t1t2_tensor):
     masks = sio.loadmat(mask_fn)
 
     # Loading the acquired data
     acquired_data_orig = sio.loadmat(acq_data_fn)['dataToMatch'].astype(np.float)
-    acquired_data_orig = np.rot90(acquired_data_orig, axes=(1,2))
+    acquired_data_orig = np.rot90(acquired_data_orig, axes=(1, 2))
 
     [_, c_acq_data, w_acq_data] = np.shape(acquired_data_orig)
 
@@ -371,9 +379,10 @@ def load_and_preprocess_data(acq_data_fn, t12_fn, mask_fn, sched_iter, device, m
 
     return acquired_data, mask, c_acq_data, w_acq_data, acquired_map_t1w_orig, acquired_map_t2w_orig
 
+
 def define_min_max(dictionary):
-    min_fs = np.min(dictionary['fs_0'])
-    min_ksw = np.min(dictionary['ksw_0'].transpose().astype(np.float))
+    # min_fs = np.min(dictionary['fs_0'])   # alternative to 0 if changed
+    # min_ksw = np.min(dictionary['ksw_0'].transpose().astype(np.float))  # alternative to 0 if changed
     max_fs = np.max(dictionary['fs_0'])
     max_ksw = np.max(dictionary['ksw_0'].transpose().astype(np.float))
 
@@ -389,6 +398,7 @@ def define_min_max(dictionary):
     max_water_t1t2_tensor = torch.tensor(np.hstack((max_t1w, max_t2w)), requires_grad=False)
 
     return min_param_tensor, max_param_tensor, min_water_t1t2_tensor, max_water_t1t2_tensor
+
 
 if __name__ == '__main__':
     main()

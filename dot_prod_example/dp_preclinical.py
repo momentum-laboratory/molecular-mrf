@@ -5,23 +5,21 @@ import numpy as np
 import scipy.io as sio
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
-
+from utils.colormaps import b_viridis
+from dot_prod_example.configs import ConfigPreclinical
+from dot_prod_example.sequences import write_sequence_preclinical
 from cest_mrf.write_scenario import write_yaml_dict
 from cest_mrf.dictionary.generation import generate_mrf_cest_dictionary
 from cest_mrf.metrics.dot_product import dot_prod_matching
 
 # Add the parent directory to sys.path to find the utils package
-module_path = os.path.abspath(os.path.join('..')) 
+module_path = os.path.abspath(os.path.join('..'))
 if module_path not in sys.path:
     sys.path.append(module_path)
 
-from utils.colormaps import b_viridis
-
-from dot_prod_example.configs import ConfigPreclinical
-from dot_prod_example.sequences import write_sequence_preclinical
 
 def setup_sequence_definitions(cfg):
-    """Setup the sequence definitions based on configuration."""
+    """ Setup the sequence definitions based on configuration."""
     seq_defs = {
         'n_pulses': 1,  # number of pulses
         'tp': 3,  # pulse duration [s]
@@ -39,8 +37,9 @@ def setup_sequence_definitions(cfg):
     seq_defs['DCsat'] = seq_defs['tp'] / (seq_defs['tp'] + seq_defs['td'])  # duty cycle
     seq_defs['Tsat'] = seq_defs['n_pulses'] * (seq_defs['tp'] + seq_defs['td']) - seq_defs['td']
     seq_defs['seq_id_string'] = os.path.splitext(cfg['seq_fn'])[1][1:]  # unique seq id
-    
+
     return seq_defs
+
 
 def generate_quant_maps(data_f, output_f, dict_fn):
     """Run dot product matching and save quant maps."""
@@ -48,6 +47,7 @@ def generate_quant_maps(data_f, output_f, dict_fn):
     quant_maps = dot_prod_matching(dict_fn=dict_fn, acquired_data_fn=acq_fn)
 
     return quant_maps
+
 
 def visualize_and_save_results(quant_maps, output_f):
     """Visualize quant maps and save them as PDF."""
@@ -68,7 +68,7 @@ def visualize_and_save_results(quant_maps, output_f):
     tick_list = [np.arange(0, 140, 20), np.arange(0, 600, 100), np.arange(0.999, 1.0005, 0.0005)]
 
     for ax, color_map, key, title, clim, ticks in zip(axes.flat, color_maps, data_keys, titles, clim_list, tick_list):
-        vals = quant_maps[key] * (key == 'fs' and 110e3/3 or 1) * mask
+        vals = quant_maps[key] * (key == 'fs' and 110e3 / 3 or 1) * mask
         plot = ax.imshow(vals, cmap=color_map)
         plot.set_clim(*clim)
         ax.set_title(title, fontsize=25)
@@ -81,12 +81,13 @@ def visualize_and_save_results(quant_maps, output_f):
         print("Resulting plots saved as PDF")
         plt.close()
 
+
 def main():
     # data_f = r'dot_prod_example/data'
     # output_f = r'dot_prod_example/results'
     data_f = r'data'
     output_f = r'results'
-    
+
     cfg = ConfigPreclinical().get_config()
 
     # Write configuration and sequence files
@@ -95,7 +96,8 @@ def main():
     write_sequence_preclinical(seq_defs=seq_defs, seq_fn=cfg['seq_fn'])
 
     # Dictionary generation
-    generate_mrf_cest_dictionary(seq_fn=cfg['seq_fn'], param_fn=cfg['yaml_fn'], dict_fn=cfg['dict_fn'], num_workers=cfg['num_workers'], axes='xy')
+    generate_mrf_cest_dictionary(seq_fn=cfg['seq_fn'], param_fn=cfg['yaml_fn'], dict_fn=cfg['dict_fn'],
+                                 num_workers=cfg['num_workers'], axes='xy')
 
     # Dot product matching and quant map generation
     start_time = time.perf_counter()
@@ -104,6 +106,7 @@ def main():
 
     # Visualization and saving results
     visualize_and_save_results(quant_maps, output_f)
+
 
 if __name__ == '__main__':
     main()
