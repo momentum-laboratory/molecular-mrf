@@ -55,7 +55,7 @@ def cest_mrf_install(cest_mrf_src: str = os.path.join(__file__, 'cest_mrf'), opt
         name='cest_mrf',
         author='Nikita Vladimirov',
         author_email='nikitav@mail.tau.ac.il',
-        version='0.2',
+        version='0.4',
         description='Python code to use C++ pulseq-CEST to simulate MRI signal and MRF dictionary generation.',
         install_requires=['bmctool==0.5.0', 'numpy==1.19.5', 'scipy==1.10.0', 'PyYAML==6.0', 'sigpy==0.1.22', 'ipykernel==6.29.0'],
         keywords='MRI, Bloch, CEST, simulations',
