@@ -42,7 +42,7 @@ docker run vnikale/pycest-starter
 ## Structure:
 
 `open-py-cest-mrf` is the main package for the CEST MRF simulator. For further details, refer to open-py-cest-mrf/README.md.
-The repository includes 4 main examplary case studies, arranged into separate folders. Each folder contains a Jupyther noebook (.ipynb) and a python script (.py) file. To reproduce the figures from the Nat. Prot. paper, follow the steps described in the .ipynb files. The protocol paper provides additional backgruond information and explanations for each example. 
+The repository includes 4 main exemplary case studies, arranged into separate folders. Each folder contains a Jupyther notebook (.ipynb) and a python script (.py) file. To reproduce the figures from the Nat. Prot. paper, follow the steps described in the .ipynb files. The protocol paper provides additional background information and explanations for each example. 
 
 Some folders may contain a `visualization.ipynb` file that recreates the original figures from the paper, **once you run the main files** to create maps for visualization.
 
@@ -60,4 +60,4 @@ python -m dot_prod_example.clinical
 
 `human_example` is an example of neural-network quantification inference on clinical human data. It includes `drone.ipynb` along with the corresponding .py file. 
 
-`metrics_example` demonstrates the use of the Monte Carlo and the Cramer Rao Bound for assessing the encoding capability of MRF acquisition schedules. It includes `monte_carlo.ipynb` and `crlb.ipynb`
+`metrics_example` demonstrates the use of the Monte Carlo and the Cramer Rao Bound for assessing the encoding capability of MRF acquisition schedules. It includes `monte_carlo.ipynb` and `crlb.ipynb`.
