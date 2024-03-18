@@ -1,10 +1,7 @@
 import os
 import time
 import torch
-import torch.nn as nn
-import torch.optim as optim
 from torch.utils.data import DataLoader
-from torch.autograd import Variable
 import numpy as np
 import scipy.io as sio
 from matplotlib import pyplot as plt
@@ -13,7 +10,6 @@ import tqdm
 
 from cest_mrf.write_scenario import write_yaml_dict
 from cest_mrf.dictionary.generation import generate_mrf_cest_dictionary
-from cest_mrf.metrics.dot_product import  dot_prod_matching
 
 from utils.normalization import normalize_range, un_normalize_range
 from utils.colormaps import b_viridis
@@ -22,7 +18,9 @@ from deep_reco_example.dataset import DatasetMRF
 from deep_reco_example.model import Network
 from deep_reco_example.configs import ConfigPreclinical
 
-FOLDER = 'deep_reco_example'
+# FOLDER = 'deep_reco_example'
+FOLDER = ''
+
 
 def main():
     # Schedule iteration (signal dimension)
@@ -41,27 +39,29 @@ def main():
     set_seed(2024)
     device = initialize_device()
     print(f"Using device: {device}")
-    
+
     data_folder = r'data'
     output_folder = r'results'
     data_folder = os.path.join(FOLDER, data_folder)
     output_folder = os.path.join(FOLDER, output_folder)
-    
+
     cfg = ConfigPreclinical().get_config()
 
     write_yaml_dict(cfg, os.path.join(FOLDER, cfg['yaml_fn']))
 
     dictionary = generate_dict(cfg)
     min_param_tensor, max_param_tensor = define_min_max(dictionary)
-    
+
     train_loader = prepare_dataloader(dictionary, batch_size=batch_size)
     reco_net = Network(sig_n).to(device)
     optimizer = torch.optim.Adam(reco_net.parameters(), lr=learning_rate)
-    reco_net = train_network(train_loader, reco_net, optimizer, device, learning_rate, num_epochs, noise_std, min_param_tensor, max_param_tensor, patience, min_delta)
-    
+    reco_net = train_network(train_loader, reco_net, optimizer, device, learning_rate, num_epochs, noise_std,
+                             min_param_tensor, max_param_tensor, patience, min_delta)
+
     data_fn = os.path.join(data_folder, 'acquired_data.mat')
     eval_data, c_acq_data, w_acq_data = load_and_preprocess_data(data_fn, sig_n)
-    quant_maps = evaluate_network(reco_net, eval_data, device, min_param_tensor, max_param_tensor, c_acq_data=c_acq_data, w_acq_data=w_acq_data)
+    quant_maps = evaluate_network(reco_net, eval_data, device, min_param_tensor, max_param_tensor,
+                                  c_acq_data=c_acq_data, w_acq_data=w_acq_data)
 
     save_and_plot_results(quant_maps, output_folder)
 
@@ -93,16 +93,20 @@ def set_seed(seed=42):
     torch.backends.cudnn.benchmark = False
     os.environ["PYTHONHASHSEED"] = str(seed)
 
+
 def initialize_device():
     """Initialize device (GPU/CPU)."""
     return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 def prepare_dataloader(data, batch_size):
     """Prepare DataLoader for training."""
     dataset = DatasetMRF(data)
     return DataLoader(dataset=dataset, batch_size=batch_size, shuffle=True, num_workers=8)
 
-def train_network(train_loader, reco_net, optimizer, device, learning_rate, num_epochs, noise_std, min_param_tensor, max_param_tensor, patience, min_delta):
+
+def train_network(train_loader, reco_net, optimizer, device, learning_rate, num_epochs, noise_std, min_param_tensor,
+                  max_param_tensor, patience, min_delta):
     """Train the network."""
     t0 = time.time()
     loss_per_epoch = []
@@ -120,14 +124,14 @@ def train_network(train_loader, reco_net, optimizer, device, learning_rate, num_
             target = torch.stack((cur_fs, cur_ksw), dim=1)
 
             target = normalize_range(original_array=target, original_min=min_param_tensor,
-                                        original_max=max_param_tensor, new_min=-1, new_max=1).to(device).float()
+                                     original_max=max_param_tensor, new_min=-1, new_max=1).to(device).float()
 
             # Adding noise to the input signals (trajectories)
             noised_sig = cur_norm_sig + torch.randn(cur_norm_sig.size()) * noise_std
             noised_sig = noised_sig.to(device).float()
 
             prediction = reco_net(noised_sig)
-            
+
             # Batch loss (MSE)
             loss = torch.mean((prediction - target) ** 2)
 
@@ -142,14 +146,14 @@ def train_network(train_loader, reco_net, optimizer, device, learning_rate, num_
         # Average loss for this epoch
         loss_per_epoch.append(cum_loss / (counter + 1))
 
-        pbar.set_description(f'Epoch: {epoch+1}/{num_epochs}, Loss = {loss_per_epoch[-1]}')
+        pbar.set_description(f'Epoch: {epoch + 1}/{num_epochs}, Loss = {loss_per_epoch[-1]}')
         pbar.update(1)
-        if (min_loss - loss_per_epoch[-1])/min_loss > min_delta:    
+        if (min_loss - loss_per_epoch[-1]) / min_loss > min_delta:
             min_loss = loss_per_epoch[-1]
             patience_counter = 0
         else:
             patience_counter += 1
-        
+
         if patience_counter > patience:
             print('Early stopping!')
             break
@@ -160,9 +164,10 @@ def train_network(train_loader, reco_net, optimizer, device, learning_rate, num_
         'model_state_dict': reco_net.state_dict(),
         'optimizer_state_dict': optimizer.state_dict(),  #
         'loss_per_epoch': loss_per_epoch,
-    }, os.path.join(FOLDER,'checkpoint.pt'))
-    
+    }, os.path.join(FOLDER, 'checkpoint.pt'))
+
     return reco_net
+
 
 def evaluate_network(reco_net, data, device, min_param_tensor, max_param_tensor, c_acq_data=30, w_acq_data=126):
     """Evaluate the network on new data."""
@@ -172,7 +177,7 @@ def evaluate_network(reco_net, data, device, min_param_tensor, max_param_tensor,
         outputs = reco_net(inputs)
 
     outputs = un_normalize_range(outputs, original_min=min_param_tensor.to(device),
-                                original_max=max_param_tensor.to(device), new_min=-1, new_max=1)
+                                 original_max=max_param_tensor.to(device), new_min=-1, new_max=1)
 
     quant_map_fs = outputs.cpu().detach().numpy()[:, 0]
     quant_map_fs = quant_map_fs.T
@@ -186,6 +191,7 @@ def evaluate_network(reco_net, data, device, min_param_tensor, max_param_tensor,
 
     return quant_maps
 
+
 def save_and_plot_results(quant_maps, output_folder):
     """Save quantitative maps and generate plots."""
     # Saving output maps
@@ -194,41 +200,44 @@ def save_and_plot_results(quant_maps, output_folder):
     sio.savemat(out_fn, quant_maps)
 
     # load mask from created using dot-product values
-    mask = np.load('dot_prod_example/mask.npy')
+    mask = np.load('../dot_prod_example/mask.npy')
 
     pdf_fn = os.path.join(output_folder, 'deep_reco_preclinical.pdf')
     with PdfPages(pdf_fn) as pdf:
         plt.figure(figsize=(10, 5))
         # [L-arg] (mM)
         plt.subplot(121)
-        plt.imshow(quant_maps['fs']*mask, cmap=b_viridis, clim=(0, 120))
+        plt.imshow(quant_maps['fs'] * mask, cmap=b_viridis, clim=(0, 120))
         plt.colorbar(ticks=np.arange(0, 121, 20), fraction=0.046, pad=0.04)
         plt.title('[L-arg] (mM)')
         plt.axis("off")
         # ksw (Hz)
         plt.subplot(122)
-        plt.imshow(quant_maps['ksw']*mask, cmap='magma', clim=(0, 500))
+        plt.imshow(quant_maps['ksw'] * mask, cmap='magma', clim=(0, 500))
         plt.colorbar(ticks=np.arange(0, 501, 100), fraction=0.046, pad=0.04)
-        plt.title('ksw (Hz)')
+        plt.title('k$_{sw}$ (s$^{-1}$)')
         plt.axis("off")
         plt.tight_layout()
         pdf.savefig()
 
+
 def generate_dict(cfg):
     yaml_fn = cfg['yaml_fn']
-    seq_fn = cfg['seq_fn'] 
+    seq_fn = cfg['seq_fn']
     dict_fn = cfg['dict_fn']
 
     yaml_fn = os.path.join(FOLDER, yaml_fn)
     seq_fn = os.path.join(FOLDER, seq_fn)
     dict_fn = os.path.join(FOLDER, dict_fn)
 
-    dictionary = generate_mrf_cest_dictionary(seq_fn=seq_fn, param_fn=yaml_fn, dict_fn=dict_fn, num_workers=cfg['num_workers'],
-                                    axes='xy')  # axes can also be 'z' if no readout is simulated
+    dictionary = generate_mrf_cest_dictionary(seq_fn=seq_fn, param_fn=yaml_fn, dict_fn=dict_fn,
+                                              num_workers=cfg['num_workers'],
+                                              axes='xy')  # axes can also be 'z' if no readout is simulated
 
     dictionary = preprocess_dict(dictionary)
-    
+
     return dictionary
+
 
 def preprocess_dict(dictionary):
     """Preprocess the dictionary for dot-matching"""
@@ -240,8 +249,9 @@ def preprocess_dict(dictionary):
 
     return dictionary
 
+
 def define_min_max(dictionary):
-     # load the data and define range for normalization
+    # load the data and define range for normalization
     min_fs = np.min(dictionary['fs_0'])
     min_ksw = np.min(dictionary['ksw_0'].transpose().astype(np.float))
     max_fs = np.max(dictionary['fs_0'])
@@ -251,6 +261,7 @@ def define_min_max(dictionary):
     max_param_tensor = torch.tensor(np.hstack((max_fs, max_ksw)), requires_grad=False)
 
     return min_param_tensor, max_param_tensor
+
 
 if __name__ == '__main__':
     main()
