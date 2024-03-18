@@ -17,7 +17,7 @@ from cest_mrf.metrics.dot_product import dot_prod_matching
 
 
 def setup_sequence_definitions(cfg, b1):
-    """ set up the sequence definitions based on B1 values and configuration."""
+    """Set up the sequence definitions based on B1 values and configuration."""
     num_meas = len(b1)
     seq_defs = {
         "n_pulses": 13,
@@ -64,22 +64,24 @@ def preprocess_image(data_f, file_name):
     return np.nan_to_num(img)[:, 19:-19, :]
 
 
-def apply_masks(quant_maps, output_f):
-    """Apply different masks based on quant_map criteria and save them."""
+def create_masks(quant_maps):
+    """Create different masks based on quant_map criteria and save them."""
     mask_dp = quant_maps['dp'] > 0.9995
     mask_ksw = quant_maps['ksw'] > 100
     mask_fs = quant_maps['fs'] * 110e3 / 3 > 10
     mask = mask_ksw * mask_dp * mask_fs
 
-    np.save(os.path.join(output_f, 'mask_dp.npy'), mask_dp)
-    np.save(os.path.join(output_f, 'mask_ksw_3T.npy'), mask_ksw)
-    np.save(os.path.join(output_f, 'mask_fs_3T.npy'), mask_fs)
-    np.save(os.path.join(output_f, 'mask_3T.npy'), mask)
+    np.save('mask_dp.npy', mask_dp)
+    np.save('mask_ksw_3T.npy', mask_ksw)
+    np.save('mask_fs_3T.npy', mask_fs)
+    np.save('mask_3T.npy', mask)
+
+    return mask
 
 
 def visualize_and_save_results(quant_maps, output_f, mask):
-    """Visualize quant maps, apply mask, and save as PDF."""
-    pdf_fn = os.path.join(output_f, 'dot_product_results_3T.pdf')
+    """Visualize quant maps, apply mask, and save as eps."""
+    fig_fn = os.path.join(output_f, 'dot_product_results_3T.eps')
     os.makedirs(output_f, exist_ok=True)
 
     fig, axes = plt.subplots(1, 3, figsize=(30, 25))
@@ -98,9 +100,10 @@ def visualize_and_save_results(quant_maps, output_f, mask):
         cb.ax.tick_params(labelsize=25)
         ax.set_axis_off()
 
-    with PdfPages(pdf_fn) as pdf:
-        pdf.savefig(fig)
-        plt.close()
+    plt.tight_layout()
+    plt.savefig(fig_fn, format="eps")
+    plt.close()
+    print("Resulting plots saved as EPS")
 
 
 def preprocess_dict(dictionary):
@@ -115,17 +118,17 @@ def preprocess_dict(dictionary):
 
 
 def main():
-    # data_f = r'dot_prod_example/data'
-    # output_f = r'dot_prod_example/results'
-    data_f = r'data'
-    output_f = r'results'
+    data_f = 'data'
+    output_f = 'results'
 
     cfg = ConfigClinical().get_config()
-    write_yaml_dict(cfg, cfg['yaml_fn'])
+
+    write_yaml_dict(cfg)
 
     # Write sequence file
     b1_values = [2, 2, 1.7, 1.5, 1.2, 1.2, 3, 0.5, 3, 1, 2.2, 3.2, 1.5, 0.7, 1.5, 2.2, 2.5, 1.2, 3, 0.2, 1.5, 2.5, 0.7,
                  4, 3.2, 3.5, 1.5, 2.7, 0.7, 0.5]
+    
     seq_defs, lims = setup_sequence_definitions(cfg, b1_values)
     write_sequence_clinical(seq_defs, cfg['seq_fn'], lims, type='simulation')
 
@@ -143,12 +146,12 @@ def main():
     out_fn = 'quant_maps_3T.mat'
     sio.savemat(os.path.join(output_f, out_fn), quant_maps)
 
-    apply_masks(quant_maps, output_f)
+    mask = create_masks(quant_maps)
 
     # Visualize and save results
-    mask = np.load(os.path.join(output_f, 'mask_3T.npy'))
     visualize_and_save_results(quant_maps, output_f, mask)
 
 
 if __name__ == "__main__":
+    os.chdir(os.path.dirname(os.path.realpath(__file__)))
     main()
