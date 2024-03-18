@@ -3,20 +3,19 @@ import sys
 import time
 import numpy as np
 import scipy.io as sio
+
 from matplotlib import pyplot as plt
-from matplotlib.backends.backend_pdf import PdfPages
+
 from utils.colormaps import b_viridis
+
 from dot_prod_example.configs import ConfigPreclinical
 from dot_prod_example.sequences import write_sequence_preclinical
+
 from cest_mrf.write_scenario import write_yaml_dict
 from cest_mrf.dictionary.generation import generate_mrf_cest_dictionary
 from cest_mrf.metrics.dot_product import dot_prod_matching
 
-# Add the parent directory to sys.path to find the utils package
-module_path = os.path.abspath(os.path.join('..'))
-if module_path not in sys.path:
-    sys.path.append(module_path)
-
+FOLDER = os.path.dirname(os.path.realpath(__file__))
 
 def setup_sequence_definitions(cfg):
     """ Setup the sequence definitions based on configuration."""
@@ -41,11 +40,10 @@ def setup_sequence_definitions(cfg):
     return seq_defs
 
 
-def generate_quant_maps(data_f, output_f, dict_fn):
+def generate_quant_maps(data_f, dict_fn):
     """Run dot product matching and save quant maps."""
     acq_fn = os.path.join(data_f, 'acquired_data.mat')
     quant_maps = dot_prod_matching(dict_fn=dict_fn, acquired_data_fn=acq_fn)
-
     return quant_maps
 
 
@@ -53,13 +51,15 @@ def visualize_and_save_results(quant_maps, output_f):
     """Visualize quant maps and save them as PDF."""
     os.makedirs(output_f, exist_ok=True)
 
-    sio.savemat(output_f, quant_maps)
+    mat_fn = os.path.join(output_f, 'quant_maps.mat')
+    sio.savemat(mat_fn, quant_maps)
     print('quant_maps.mat saved')
 
     mask = quant_maps['dp'] > 0.99974
-    np.save('mask.npy', mask)
+    mask_fn = os.path.join(FOLDER, 'mask.npy')
+    np.save(mask_fn, mask)
 
-    pdf_fn = os.path.join(output_f, 'dot_product_results.pdf')
+    fig_fn = os.path.join(output_f, 'dot_product_results.eps')
     fig, axes = plt.subplots(1, 3, figsize=(30, 25))
     color_maps = [b_viridis, 'magma', 'magma']
     data_keys = ['fs', 'ksw', 'dp']
@@ -76,32 +76,34 @@ def visualize_and_save_results(quant_maps, output_f):
         cb.ax.tick_params(labelsize=25)
         ax.set_axis_off()
 
-    with PdfPages(pdf_fn) as pdf:
-        pdf.savefig(fig)
-        print("Resulting plots saved as PDF")
-        plt.close()
+    plt.tight_layout()
+    plt.savefig(fig_fn, format="eps")
+    plt.close()
+    print("Resulting plots saved as EPS")
 
 
 def main():
-    # data_f = r'dot_prod_example/data'
-    # output_f = r'dot_prod_example/results'
-    data_f = r'data'
-    output_f = r'results'
+    data_f = os.path.join(FOLDER, 'data')
+    output_f = os.path.join(FOLDER, 'results')
 
     cfg = ConfigPreclinical().get_config()
 
+    seq_fn = os.path.join(FOLDER, cfg['seq_fn'])
+    yaml_fn = os.path.join(FOLDER, cfg['yaml_fn'])
+    dict_fn = os.path.join(FOLDER, cfg['dict_fn'])
+
     # Write configuration and sequence files
-    write_yaml_dict(cfg, cfg['yaml_fn'])
+    write_yaml_dict(cfg, yaml_fn)
     seq_defs = setup_sequence_definitions(cfg)
-    write_sequence_preclinical(seq_defs=seq_defs, seq_fn=cfg['seq_fn'])
+    write_sequence_preclinical(seq_defs=seq_defs, seq_fn=seq_fn)
 
     # Dictionary generation
-    generate_mrf_cest_dictionary(seq_fn=cfg['seq_fn'], param_fn=cfg['yaml_fn'], dict_fn=cfg['dict_fn'],
+    dictionary = generate_mrf_cest_dictionary(seq_fn=seq_fn, param_fn=yaml_fn, dict_fn=dict_fn,
                                  num_workers=cfg['num_workers'], axes='xy')
 
     # Dot product matching and quant map generation
     start_time = time.perf_counter()
-    quant_maps = generate_quant_maps(data_f, output_f, cfg['dict_fn'])
+    quant_maps = generate_quant_maps(data_f, dict_fn)
     print(f"Dot product matching took {time.perf_counter() - start_time:.03f} s.")
 
     # Visualization and saving results
