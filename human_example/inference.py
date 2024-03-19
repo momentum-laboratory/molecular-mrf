@@ -20,16 +20,13 @@ def main():
     sig_n = 30
     human_net = torch.jit.load('human_net.pt')
     human_net.to(device)
-    print(human_net)
-
+    
     # load checkpoint
     chk_fn = f'checkpoint.pt'
     state_dict = torch.load(chk_fn)
 
     scaling = state_dict['scaling']
     params = state_dict['recon_tissues']
-
-    print(state_dict.keys(), params)
 
     # load data
     data_fn = f'data_to_match.npy'
@@ -117,7 +114,7 @@ def main():
         signal = quant_maps[param]
         title = param
         if param in ['T1w', 'T2w']:
-            title = param[:1] + f'$_{{{param[1:]}}}$' + ' (ms)'
+            title = 'Water ' + param[:1] + f'$_{{{param[1]}}}$' +' (ms)'
 
         if param in ['M0s', 'M0ss']:
             signal = signal * 100
@@ -138,4 +135,5 @@ def main():
 
 
 if __name__ == '__main__':
+    os.chdir(os.path.dirname(os.path.realpath(__file__)))
     main()
