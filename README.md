@@ -15,7 +15,7 @@ The CEST-MRF package (open-py-cest-mrf) facilitates rapid generation of CEST-MRF
 3. [pulseq-cest Matlab](https://github.com/kherz/pulseq-cest/tree/master)
 
 ## Prerequisites:
-- Python >= 3.9
+- Python version 3.9
 - Git
 - SWIG (can be installed using `sudo apt-get install swig` or [SWIG](https://www.swig.org/download.html))
 
