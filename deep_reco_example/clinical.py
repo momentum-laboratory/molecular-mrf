@@ -5,7 +5,6 @@ from torch.utils.data import DataLoader
 import numpy as np
 import scipy.io as sio
 from matplotlib import pyplot as plt
-from matplotlib.backends.backend_pdf import PdfPages
 import tqdm
 
 from cest_mrf.write_scenario import write_yaml_dict

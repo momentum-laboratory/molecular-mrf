@@ -8,7 +8,6 @@ import os
 
 import scipy.io as sio
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_pdf import PdfPages
 
 import tqdm
 

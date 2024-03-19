@@ -3,7 +3,6 @@ import time
 import numpy as np
 import scipy.io as sio
 from matplotlib import pyplot as plt
-from matplotlib.backends.backend_pdf import PdfPages
 import pypulseq as pp
 
 from utils.colormaps import b_viridis
