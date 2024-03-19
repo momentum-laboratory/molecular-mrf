@@ -62,3 +62,5 @@ python -m dot_prod_example.clinical
 `human_example` is an example of neural-network quantification inference on clinical human data. It includes `inference.ipynb` along with the corresponding .py file. 
 
 `metrics_example` demonstrates the use of the Monte Carlo and the Cramer Rao Bound for assessing the encoding capability of MRF acquisition schedules. It includes `monte_carlo.ipynb` and `crlb.ipynb`.
+
+The `supplementary` folder contains additional materials: in the `phantom_cad` folder, there is an `.stl` file containing the CAD file for the phantom holder. In the `published_pulse_sequences` folder, you can find the pulse sequences mentioned in the Nature Protocols paper. For details, refer to the corresponding `README` file contained in the folder.
