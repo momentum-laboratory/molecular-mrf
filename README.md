@@ -28,8 +28,15 @@ pip install -e .
 ```
 The `-e` argument enables editable mode installation, allowing you to modify the source code directly in your local copy. 
 
+If you do not plan to use the Jupyter notebook examples, you must manually install PyTorch and OpenCV, as they are treated as external libraries and are not required by the simulator. You can install them using the following commands:
+```
+pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+pip3 install opencv-python
+```
+If you are using the deep_reco.ipynb Jupyter notebook examples, these libraries will be installed in the first cell of the notebook.
+
 ### Docker
-Alternatively, you can use Docker. Build the image with the provided Dockerfile using the following command:
+Alternatively, you can use Docker, which has everything preinstalled. Build the image with the provided Dockerfile using the following command:
 ```
 docker build -t pycest-starter .
 ```
