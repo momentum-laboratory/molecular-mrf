@@ -11,23 +11,20 @@ script_directory = os.path.dirname(os.path.abspath(__file__))
 if current_directory != script_directory:
     os.chdir(script_directory)
 
-# sequence definitions from the bruker sequence
-f_name = 'scone.txt'
+B1 = [2, 2, 1.7, 1.5, 1.2, 1.2, 3, 0.5, 3, 1, 2.2, 3.2, 1.5, 0.7, 1.5, 2.2, 2.5, 1.2, 3, 0.2, 1.5, 2.5, 0.7, 4,
+        3.2, 3.5, 1.5, 2.7, 0.7, 0.5]
+N = len(B1)
+ppm = [3.5] * N
+TR = [3.5] * N
+Tsat = [2.560] * N
 
-with open(f_name, 'r') as file:
-    N = int(file.readline())
-    TR, B1, ppm, FA, Tsat = np.zeros((5, N))
-    
-    for i, line in enumerate(file):
-        tr, b1, off, fa, tsat = map(float, line.split())
-        TR[i], B1[i], ppm[i], FA[i], Tsat[i] = tr, b1, off, fa, tsat
-
-# to seconds
-TR = TR / 1000 
-Tsat = Tsat / 1000
+ppm = np.array(ppm)
+TR = np.array(TR)
+Tsat = np.array(Tsat)
+B1 = np.array(B1)
 
 gamma = 267.5153  # [rad / uT]
-seq_fn = '16msGaussianSCONE.seq'
+seq_fn = '16msGaussianDRONE.seq'
 type_s = 'scanner' # type of sequence can be simulator or scanner
 
 seq_defs = {}
