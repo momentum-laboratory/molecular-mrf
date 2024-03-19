@@ -6,8 +6,9 @@ Written by Nikita Vladimirov, some modifications by Or Perlman and built on and 
 3. [pulseq-cest Matlab](https://github.com/kherz/pulseq-cest/tree/master) 
 
 ## Prerequisites:
-- Python >= 3.9
+- Python = 3.9
 - git
+- SWIG
 
 ## Installation
 Run the following command inside the terminal (preferably in a clean conda env or similar):
@@ -17,8 +18,6 @@ Run the following command inside the terminal (preferably in a clean conda env o
 The argument `-e` allows installation in editable mode, so you can change sources inside your local copy.
 
 ## Structure:
-- `cest_mrf_phantom_demo.py` - this is the main example file that contains a script to generate `.seq` and `.yaml`
-files and generate the dictionary, performs dot-product, and plots the results. It uses the same L-arg data ('acquired_data.mat') given in https://github.com/operlman/cest-mrf.
 - `cest_mrf/simulation/*` - this folder contains the sources of the simulation function and SimulationParametersMRF class.
 - `cest_mrf/sequence/*` - this folder contains the sources of functions that create sequences and save them in `.seq` files
 - `cest_mrf/dictionary/*` - this folder contains the sources of functions for preparing the dictionary and its generation.
