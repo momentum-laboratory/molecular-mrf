@@ -137,7 +137,7 @@ def main():
     dictionary = preprocess_dict(dictionary)
 
     # Load and preprocess image data
-    img = preprocess_image(data_f, 'dataToMatch_30_126_88_slice75.mat')
+    img = preprocess_image(data_f, 'acquired_data3T.mat')
     start = time.perf_counter()
     quant_maps = dot_prod_matching(dictionary=dictionary, acquired_data=img, batch_size=img.shape[1] * 2)
     print(f"Dot product matching took {time.perf_counter() - start:.03f} s.")
