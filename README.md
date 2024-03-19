@@ -45,6 +45,7 @@ docker run vnikale/pycest-starter
 The repository includes 4 main exemplary case studies, arranged into separate folders. Each folder contains a Jupyther notebook (.ipynb) and a python script (.py) file. To reproduce the figures from the Nat. Prot. paper, follow the steps described in the .ipynb files. The protocol paper provides additional background information and explanations for each example. 
 
 Some folders may contain a `visualization.ipynb` file that recreates the original figures from the paper, **once you run the main files** to create maps for the visualization.
+Also, you can find a folder `expected_out` that contains expected figures and `.mat` with quantitative maps.
 
 To run .py examples you have to treat the repo as a package, e.g. (run it in **the root folder**):
 ```
