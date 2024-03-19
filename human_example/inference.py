@@ -9,6 +9,7 @@ import os
 
 from utils.colormaps import b_viridis, b_winter
 
+import scipy.io as sio
 
 def main():
     if torch.cuda.is_available():
@@ -61,6 +62,8 @@ def main():
         quant_maps[param] = quant_maps[param].T
         quant_maps[param] = np.reshape(quant_maps[param], (c_acq_data, w_acq_data), order='F')
 
+    sio.savemat('quant_maps.mat', quant_maps)
+    
     # load brain mask (created with SAM model)
     mask_fn = 'human_mask.npy'
     mask = np.load(mask_fn)
