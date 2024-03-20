@@ -9,3 +9,4 @@ APTw protocol
 - DC<sub>sat</sub> = 100%
 
 ## Publication
+ Zhou J, Zaiss M, Knutsson L, et al. Review and consensus recommendations on clinical APT-weighted imaging approaches at 3T: Application to brain tumors. Magn Reson Med. 2022; 88: 546-574. doi:10.1002/mrm.29241.

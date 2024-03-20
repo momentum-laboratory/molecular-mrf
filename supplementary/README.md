@@ -1,6 +1,6 @@
 # Supplementary
-This folder contains additional to the protocols files:
-- Pulse sequences in the folder `published_pulse_sequences`
-- 3D CAD `.stl` file for the 3D printing of phantom holder in `phantom_cad`
+This folder contains:
+- Previously published pulse sequences in .txt format for Bruker scannners and/or .seq format for clinical scanners. 
+- A CAD file (.stl format) for 3D printing a phantom holder that holds six vials of 15 mL.
 
-Details can be found within folders in corresponding README files.
+Additional information can be found in the README files located within each folder.
