@@ -1,8 +1,8 @@
 # Global deep learning optimized pulse sequence for CEST MRF
-The sequences are provided in Bruker `.txt` format and pypulseq `.seq` format.
+The sequences are provided in Bruker `.txt` format and pypulseq `.seq` format. The clinical `.seq` sequence is spin-lock-based.
 
 ## Description
-The folder contains protocol for brain imaging: 
+The folder contains the protocol for brain imaging: 
 - B<sub>1</sub> = 0-4 µT
 - T<sub>sat</sub> = 0-4 s
 - T<sub>R</sub> = 0-4 s 
