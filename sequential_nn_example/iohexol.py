@@ -271,9 +271,9 @@ def save_and_plot_results(quant_maps, output_f, mask):
     color_maps = ['hot', b_winter, b_viridis, 'magma']
     data_keys = ['t1w', 't2w', 'fs', 'ksw']
     titles = ['Water T$_{1}$ (ms)', 'Water T$_{2}$ (ms)', '[Iohexol] (mM)', 'k$_{sw}$ (s$^{-1}$)']
-    clim_list = [(0, 3500), (0, 1000), (0, 120), (0, 500)]
-    tick_list = [np.arange(0, 4000, 1750), np.arange(0, 1200, 500),
-                 np.arange(0, 140, 60), np.arange(0, 600, 250)]
+    clim_list = [(0, 4000), (0, 1000), (0, 150), (0, 400)]
+    tick_list = [np.arange(0, 5000, 2000), np.arange(0, 1200, 500),
+                np.arange(0, 180, 75), np.arange(0, 600, 200)]
 
     unified_font_size = 25
 
