@@ -17,9 +17,7 @@ def main():
     Tsat = np.array(Tsat)
     B1 = np.array(B1)
 
-    gamma = 267.5153  # [rad / uT]
-    seq_fn = '16msGaussian2D_EPI_CEST.seq'
-    type_s = 'scanner' # type of sequence can be simulator or scanner
+    seq_fn = '16msGaussian2D_EPI_CEST.txt'
 
     seq_defs = {}
 
@@ -34,8 +32,6 @@ def main():
     seq_defs["tsat"] = Tsat  # saturation time [s]
     seq_defs["trec"] = TR - seq_defs["tsat"]  # net recovery time [s]
 
-    seq_defs["spoiling"] = True
-
     seqid = os.path.splitext(seq_fn)[1][1:]
     seq_defs['seq_id_string'] = seqid  # unique seq id
 
@@ -44,22 +40,18 @@ def main():
 
     seq_defs["offsets_ppm"] = ppm  # offset list [ppm]
 
-    lims = pp.Opts(
-        max_grad=40,
-        grad_unit="mT/m",
-        max_slew=130,
-        slew_unit="T/m/s",
-        rf_ringdown_time=30e-6,
-        rf_dead_time=100e-6,
-        rf_raster_time=1e-6,
-        gamma=gamma/2/np.pi*1e6,
-    )
+    
+    fa = 90
+    with open(seq_fn, 'w') as file:
+        file.write(f'{len(B1)}\n')
+    for i, off in enumerate(seq_defs["offsets_ppm"]):
+        line = f"{TR[i]:.0f} {seq_defs['b1pa'][i] :.2f} {off} {fa} {seq_defs['tp']:.0f}\n"
 
-    seq_defs["gamma_hz"] = lims.gamma * 1e-6
-    seq_defs["freq"] = 127.7292
-    seq_defs['b0'] = seq_defs['freq'] / seq_defs["gamma_hz"]
+        with open(seq_fn, 'a') as file:
+            file.write(line)
+    
 
-    write_clinical_sequence_gaussian(seq_defs, seq_fn, lims, type = type_s)
+
 
 if __name__ == "__main__":
     # change folder to script directory if needed
