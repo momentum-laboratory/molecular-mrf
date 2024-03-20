@@ -178,6 +178,7 @@ def evaluate_network(reco_net, data, device, min_param_tensor, max_param_tensor,
 
 def save_and_plot_results(quant_maps, output_folder, mask):
     """Save quantitative maps and generate plots."""
+    os.makedirs(output_folder, exist_ok=True)
     # Saving output maps
     out_fn = 'nn_reco_maps_preclinical.mat'
     out_fn = os.path.join(output_folder, out_fn)
