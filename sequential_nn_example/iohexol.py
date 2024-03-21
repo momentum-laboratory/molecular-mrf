@@ -36,7 +36,7 @@ def main():
     learning_rate = 1e-3
     batch_size = 8192
     num_epochs = 150
-    noise_std = 0.0001 # noise level for training 10*log10(1/0.0001) = 40 dB
+    noise_std = 0.0001 # noise level for training
 
     min_delta = 0.02  # minimum absolute change in the loss function
     patience = 300  # number of iterations to wait before early stopping
