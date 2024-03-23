@@ -1,0 +1,7 @@
+#Test phase code 
+
+python Quant_CNN_test.py --gpu 0 --dir_result result --dir_data data --dir_model model
+
+
+data, result: the name of the folder (directory) where the data is placed and the results will be stored. 
+model: Trained model is placed in the "model" directory
