@@ -17,17 +17,11 @@ def main():
     Tsat = np.array(Tsat)
     B1 = np.array(B1)
 
-    seq_fn = '16msGaussian2D_EPI_CEST.txt'
+    seq_fn = '2D_EPI_CEST.txt'
 
     seq_defs = {}
 
     seq_defs["num_meas"] = N  # number of repetition
-
-    seq_defs["tp"] = 16e-3  # pulse duration [s]
-    seq_defs["td"] = 0  # interpulse delay [s]
-    seq_defs["dcsat"] = (seq_defs["tp"]) / (seq_defs["tp"] + seq_defs["td"])  # duty cycle
-
-    seq_defs["n_pulses"] = np.ceil(Tsat / (seq_defs["tp"] + seq_defs["td"])).astype(int)  # number of pulses
 
     seq_defs["tsat"] = Tsat  # saturation time [s]
     seq_defs["trec"] = TR - seq_defs["tsat"]  # net recovery time [s]
@@ -45,7 +39,7 @@ def main():
     with open(seq_fn, 'w') as file:
         file.write(f'{len(B1)}\n')
     for i, off in enumerate(seq_defs["offsets_ppm"]):
-        line = f"{TR[i]:.0f} {seq_defs['b1pa'][i] :.2f} {off} {fa} {seq_defs['tp']:.0f}\n"
+        line = f"{TR[i] * 1000:.0f} {seq_defs['b1pa'][i] :.2f} {off} {fa} {seq_defs['tsat'][i] * 1000:.0f}\n"
 
         with open(seq_fn, 'a') as file:
             file.write(line)

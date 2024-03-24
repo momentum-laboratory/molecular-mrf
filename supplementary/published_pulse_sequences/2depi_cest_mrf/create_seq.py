@@ -18,7 +18,7 @@ def main():
     B1 = np.array(B1)
 
     gamma = 267.5153  # [rad / uT]
-    seq_fn = '16msGaussian2D_EPI_CEST.seq'
+    seq_fn = '2D_EPI_CEST.seq'
     type_s = 'scanner' # type of sequence can be simulator or scanner
 
     seq_defs = {}

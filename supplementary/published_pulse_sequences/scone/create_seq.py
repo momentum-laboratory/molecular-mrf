@@ -21,7 +21,7 @@ def main():
     Tsat = Tsat / 1000
 
     gamma = 267.5153  # [rad / uT]
-    seq_fn = '16msGaussianSCONE.seq'
+    seq_fn = 'scone.seq'
     type_s = 'scanner' # type of sequence can be simulator or scanner
 
     seq_defs = {}
