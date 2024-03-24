@@ -8,17 +8,18 @@ import torch.nn as nn
 import numpy as np
 import scipy.io as sio
 import time
+import timeit
 import os
 import argparse
 import h5py
 from torch.utils.data import TensorDataset, DataLoader
 
-from lib.Model_Quant import nnModel
+from unsupervised_example.lib.Model_Quant import nnModel
 
 parser = argparse.ArgumentParser(description='Setting')
-parser.add_argument('--dir_data', type=str, default='data/')
-parser.add_argument('--dir_model', type=str, default='model/')
-parser.add_argument('--dir_result', type=str, default='result')
+parser.add_argument('--dir_data', type=str, default='unsupervised_example/data/')
+parser.add_argument('--dir_model', type=str, default='unsupervised_example/model/')
+parser.add_argument('--dir_result', type=str, default='unsupervised_example/result')
 parser.add_argument('--gpu', type=int, default=0)
 parser.add_argument('--epochs', type=int, default=1000)
 parser.add_argument('--lr', type=float, default=1e-4)
@@ -37,7 +38,7 @@ if torch.cuda.is_available():
     print(torch.cuda.get_device_name(0))
     print('Memory Usage:')
     print('Allocated:', round(torch.cuda.memory_allocated(0)/1024**3,1), 'GB')
-    print('Cached:   ', round(torch.cuda.memory_cached(0)/1024**3,1), 'GB')
+    print('Cached:   ', round(torch.cuda.memory_reserved(0)/1024**3,1), 'GB')
 
 ## Dataset #########################################################################
 dir_data = args.dir_data
@@ -64,6 +65,9 @@ TEST_DATASIZE = X_test.shape[0]
 quantification_result=torch.zeros([TEST_DATASIZE,4,256,256],device=device)
 ## testidation
 with torch.no_grad(): # important!
+    
+    start_time = timeit.default_timer()
+
     test_loss = 0.0
     for j, data in enumerate(testloader):
         [X_batch]=data
@@ -74,10 +78,11 @@ with torch.no_grad(): # important!
 
     quantification_result=quantification_result.cpu()
     quantification_result=quantification_result.numpy()
+
+    elapsed = timeit.default_timer() - start_time
+    print("Unsupervised pipeline inference took: " + str(elapsed) + " s")
+
     sio.savemat(args.dir_result+'/quantification_UL.mat',{'result_nn': quantification_result})
-
-        
-
 
 
 
