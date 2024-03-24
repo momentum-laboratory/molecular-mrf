@@ -14,6 +14,8 @@ The CEST-MRF package (open-py-cest-mrf) facilitates rapid generation of CEST-MRF
 2. [CEST-MRF](https://github.com/operlman/cest-mrf)
 3. [pulseq-cest Matlab](https://github.com/kherz/pulseq-cest/tree/master)
 
+The repository includes data, sample code, trained neural networks, and pulse sequences provided by several research groups and scientists, including Christian Farrar, Ouri Cohen, Hye-Young Heo, Moritz Zaiss, Nikita Vladimirov, and Or Perlman.
+
 ## Prerequisites:
 - Python version 3.9
 - Git
