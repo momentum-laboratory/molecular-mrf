@@ -1,9 +1,9 @@
 # AutoCEST generated pulse sequences
-The sequences are provided in Bruker `.txt` format.
+The sequences are provided for Bruker scanners, using a `.txt` format.
 
 ## Description
 The folder contains protocols for several imaging scenarios: 
-BSA amide and amine, rNOE, in vivo MT, and pCr.
+BSA amide and amine, rNOE, in vivo MT, and pCr at 9.4T.
 - B<sub>1</sub> = 0-6 µT
 - T<sub>sat</sub> = 0-5 s
 
