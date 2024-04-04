@@ -4,60 +4,59 @@ from numpy import linalg as la
 
 from typing import List, Dict, Optional
 
-def dot_prod_indexes(synt_sig, acquired_data, batch_size:int = 256, restrict:Dict = None):
+def dot_prod_indexes(synt_sig:List, acquired_data:List, batch_size:int = 256, restrict:Dict = None):
     """
     Perform dot product between synthetic signals and acquired data in batches.
 
-    :param synt_sig: array representing synthetic signals.
-    :param acquired_data: array representing acquired data.
+    :param synt_sig: numpy array representing synthetic signals.
+    :param acquired_data: numpy array representing acquired data.
     :param batch_size: size of each batch for processing.
-    :param restrict: dictionary containing restrictions for dot-matching such as B0 and B1 inhom. or T1w and T2w.
+    :param restrict: dictionary containing constraints for each synthetic signal. 
+        e.g. {'t1w': {'dict': np.array, 'map': np.array, 'step': 0.1}},
+        where dict is the required value in the dict, e.g. dictionary['b0_inhom'].T,
+        where map is the some quantitative map to restrict to, e.g. b0_map[...,n_slice] 
+        where step is the maximum difference allowed between the dictionary and the map.
     :return: dict containing dot products and indexes reshaped to original dimensions.
     """
-    if len(acquired_data.shape) == 3:
-        n_iter, r_raw_data, c_raw_data = acquired_data.shape
-        data = acquired_data.reshape((n_iter, r_raw_data * c_raw_data), order='F')
-        n_raw_data = r_raw_data * c_raw_data
-    elif len(acquired_data.shape) == 2:
-        n_iter, n_raw_data = acquired_data.shape
-        data = acquired_data
-    else:
-        raise ValueError("acquired_data must have 2 or 3 dimensions")
+    # NV, Apr 1, 2024
+    
+    n_iter, r_raw_data, c_raw_data = acquired_data.shape
+    data = acquired_data.reshape((n_iter, r_raw_data * c_raw_data), order='F')
 
     if restrict is not None:
+        constraint_masks = {}
         for k, v in restrict.items():
-            restrict[k] = v.reshape((n_raw_data), order='F')
+            restrict[k]['map'] = v['map'].reshape((r_raw_data * c_raw_data), order='F')
 
-    dp = np.zeros((1, n_raw_data))
-    dp_indexes = np.zeros((1, n_raw_data))
 
-    norm_dict = synt_sig / (la.norm(synt_sig, axis=0) + 1e-10)
-    norm_data = data / (la.norm(data, axis=0) + 1e-10)
+    dp = np.zeros((1, r_raw_data * c_raw_data))
+    dp_indexes = np.zeros((1, r_raw_data * c_raw_data))
+
+    norm_dict = synt_sig / (la.norm(synt_sig, axis=0) + 1e-5)
+    norm_data = data / (la.norm(data, axis=0) + 1e-5)
 
     assert norm_data.shape[1] % batch_size == 0, "The number of image pixels must be divisible by batch_size"
 
     for batch_start in range(0, norm_data.shape[1], batch_size):
         batch_end = batch_start + batch_size
+        # print(norm_data[:, batch_start:batch_end].T.shape, norm_dict.shape)
         current_score = norm_data[:, batch_start:batch_end].T @ norm_dict
 
         if restrict is not None:
             for k, v in restrict.items():
-                current_score = current_score * v[batch_start:batch_end]
+                constraint = np.abs(v['dict']-v['map'][batch_start:batch_end]) < v['step']
+                current_score *= constraint.T
 
         dp[0, batch_start:batch_end] = np.max(current_score, axis=1)
         dp_indexes[0, batch_start:batch_end] = np.argmax(current_score, axis=1)
 
-    if len(acquired_data.shape) == 3:
-        dp = dp.reshape((r_raw_data, c_raw_data), order='F')
-        dp_indexes = dp_indexes.reshape((r_raw_data, c_raw_data), order='F')
-
+    
     ret = {
-        'dp': dp,
-        'dp_indexes': dp_indexes
+        'dp': dp.reshape((r_raw_data, c_raw_data), order='F'),
+        'dp_indexes': dp_indexes.reshape((r_raw_data, c_raw_data), order='F'),
     }
 
     return ret
-
 
 def dot_prod_matching(dictionary = None, acquired_data = None, dict_fn = None, acquired_data_fn = None, batch_size = 256):
     """
