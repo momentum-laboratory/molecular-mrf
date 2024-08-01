@@ -37,6 +37,21 @@ pip3 install opencv-python
 ```
 If you are using the deep_reco.ipynb Jupyter notebook examples, these libraries will be installed in the first cell of the notebook.
 
+
+## Known Bug
+It has been found that the current version can yield errors in Pulseq or NumPy on some machines. Please do the following (yes, 2 times):
+
+```
+pip uninstall numpy
+pip uninstall numpy
+
+pip uninstall pulseq
+pip uninstall pulseq
+
+pip install -e .
+```
+
+
 ### Docker
 Alternatively, you can use Docker, which has everything preinstalled. Build the image with the provided Dockerfile using the following command:
 ```

@@ -39,7 +39,7 @@ def main():
     learning_rate = 2e-4
     batch_size = 1024
     num_epochs = 150
-    noise_std = 0.01  # noise level for training
+    noise_std = 0.0085 # noise level for training
 
     min_delta = 0.05  # minimum absolute change in the loss function
     patience = np.inf
