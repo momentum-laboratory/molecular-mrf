@@ -15,7 +15,7 @@ import os
 # import tqdm
 import tqdm.notebook as tqdm
 
-from utils.normalization import normalize_range, un_normalize_range
+from utils.normalization import normalize_range, min_max_yaml
 from utils.seed import set_seed
 
 from sequential_nn.dataset import GluAmide4pool
@@ -33,35 +33,33 @@ def main(args):
     current_dir = os.getcwd()  # Get the current directory
     parent_dir = os.path.dirname(current_dir)  # Navigate up one directory level
     glu_dict_folder_fn = os.path.join(
-        parent_dir, 'data', 'exp', 'mt_amide_glu_dicts',
-        args.dict_name_category, 'glu', args.fp_prtcl_names[0])  # dict folder directory
-    glu_memmap_fn = os.path.join(glu_dict_folder_fn, 'M0_dict.dat')
+        parent_dir, 'data', 'exp', '4pool',
+        args.dict_name_category, args.fp_prtcl_names[0])  # dict folder directory
+    glu_memmap_fn = os.path.join(glu_dict_folder_fn, 'dict.dat')
 
     amide_dict_folder_fn = os.path.join(
-        parent_dir, 'data', 'exp', 'mt_amide_glu_dicts',
-        args.dict_name_category, 'glu', args.fp_prtcl_names[1])  # dict folder directory
-    amide_memmap_fn = os.path.join(amide_dict_folder_fn, 'M0_dict.dat')
+        parent_dir, 'data', 'exp', '4pool',
+        args.dict_name_category, args.fp_prtcl_names[1])  # dict folder directory
+    amide_memmap_fn = os.path.join(amide_dict_folder_fn, 'dict.dat')
 
-    for memmap_fn in [glu_memmap_fn, amide_memmap_fn]:
-        if not os.path.exists(memmap_fn):
-            pkl_2_dat(glu_dict_folder_fn, args.sched_iter, args.add_iter, memmap_fn)
-
-    net_name = f'{args.dict_name_category}_2dict_noise_{args.noise_std}_lr_{args.learning_rate}_{args.batch_size}'
-    nn_fn = os.path.join(current_dir, 'mouse_nns', 'glu_amide_mt_nns',
-                         args.dict_name_category, '2dict', f'M0_{net_name}.pt')  # nn directory
+    net_name = (f'{args.dict_name_category}_2dict_train_{args.norm_type}_{args.sched_iter}_noise_{args.noise_std}_lr_{args.learning_rate}'
+                f'_{args.batch_size}')  # _noise_{args.noise_std}   _{args.step_size}_{args.gamma}
+    nn_fn = os.path.join(current_dir, 'mouse_nns', '4pool',
+                         args.dict_name_category, '2dict', f'{net_name}.pt')  # nn directory
 
     # min max value calc and save:
-    min_max_params = define_min_max(memmap_fn, args.sched_iter, args.add_iter, device)
+    yaml_file_path = os.path.join(os.path.dirname(glu_memmap_fn), 'scenario.yaml')
+    min_max_params = min_max_yaml(yaml_file_path, scenario_type=args.scenario_type, device=args.device)
 
     min_max_saver(min_max_params, nn_fn)
 
     # Load the shared dataset
-    full_dataset = GluAmide4pool(glu_memmap_fn, amide_memmap_fn, args.sched_iter, args.add_iter)
+    full_dataset = GluAmide4pool(glu_memmap_fn, amide_memmap_fn, args.sched_iter, args.add_iter, args.norm_type)
     dataset_size = len(full_dataset)
     print(dataset_size)
 
     # Split indices for training, validation, and test sets
-    train_indices, val_indices, test_indices = split_dataset_indices(dataset_size, val_ratio=0.2, test_ratio=0.1)
+    train_indices, val_indices, test_indices = split_dataset_indices(dataset_size, val_ratio=0, test_ratio=0)
 
     # Create subsets
     train_dataset = Subset(full_dataset, train_indices)
@@ -117,7 +115,7 @@ def train_network(args, train_loader, val_loader, test_loader, net_name, nn_fn, 
 
     # Setting optimizer
     optimizer = torch.optim.Adam(reco_net.parameters(), lr=args.learning_rate)
-    # scheduler = StepLR(optimizer, step_size=step_size, gamma=gamma)
+    scheduler = StepLR(optimizer, step_size=args.step_size, gamma=args.gamma)
 
     # Storing current time
     t0 = time.time()
@@ -126,6 +124,7 @@ def train_network(args, train_loader, val_loader, test_loader, net_name, nn_fn, 
     writer = SummaryWriter(log_dir=f'runs/{net_name}')
 
     loss_per_epoch = []
+    loss_per_step = []
     val_loss_per_epoch = []
     patience_counter = 0
     min_loss = 100
@@ -144,6 +143,9 @@ def train_network(args, train_loader, val_loader, test_loader, net_name, nn_fn, 
         for counter, dict_params in enumerate(train_loader, 0):
             reco_net, cum_loss = train_step(args, reco_net, optimizer, cum_loss, dict_params,
                                             writer, epoch, counter, min_max_params, num_steps)
+
+            if counter % 200 == 0:
+                loss_per_step.append(cum_loss / (counter + 1))
             inner_pbar.set_description(f'Step: {counter+1}/{num_steps}')
             inner_pbar.update(1)
 
@@ -154,46 +156,49 @@ def train_network(args, train_loader, val_loader, test_loader, net_name, nn_fn, 
         # Average loss for this epoch
         loss_per_epoch.append(cum_loss / (counter + 1))
 
-        # Validate the model
-        val_loss = validate(args, reco_net, val_loader, min_max_params)
-        val_loss_per_epoch.append(val_loss)
-
-        writer.add_scalar("Loss/train", loss_per_epoch[-1], epoch)
-        writer.add_scalar("Loss/val", val_loss, epoch)
+        # # Validate the model
+        # val_loss = validate(args, reco_net, val_loader, min_max_params)
+        # val_loss_per_epoch.append(val_loss)
+        #
+        # writer.add_scalar("Loss/train", loss_per_epoch[-1], epoch)
+        # writer.add_scalar("Loss/val", val_loss, epoch)
 
         pbar.set_description(f'Epoch: {epoch + 1}/{args.num_epochs}, '
                              f'Train Loss = {loss_per_epoch[-1]}, '
-                             f'Val Loss = {val_loss_per_epoch[-1]}')
+                             # f'Val Loss = {val_loss_per_epoch[-1]}'
+                             )
         pbar.update(1)
 
-        # Early stopping logic
-        if (min_loss - val_loss_per_epoch[-1]) / min_loss > args.min_delta:
-            min_loss = val_loss_per_epoch[-1]
-            patience_counter = 0
-        else:
-            patience_counter += 1
+        # # Early stopping logic
+        # if (min_loss - val_loss_per_epoch[-1]) / min_loss > args.min_delta:
+        #     min_loss = val_loss_per_epoch[-1]
+        #     patience_counter = 0
+        # else:
+        #     patience_counter += 1
+        #
+        # if patience_counter > args.patience:
+        #     print('Early stopping!')
+        #     break
 
-        if patience_counter > args.patience:
-            print('Early stopping!')
-            break
-
-        # # Scheduler step
+        # Scheduler step
         # scheduler.step()
 
         # Save model checkpoint when val loss gets better
-        if val_loss <= cur_val_loss:
+        # if val_loss <= cur_val_loss:
+        if epoch % 5 == 0:
             print(f"\nSaved epoch {epoch} model")
             torch.save({
                 'model_state_dict': reco_net.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
                 'loss_per_epoch': loss_per_epoch,
+                'loss_per_step': loss_per_step,
                 'val_loss_per_epoch': val_loss_per_epoch,
                 'noise_std': args.noise_std,
                 'epoch': epoch
             }, nn_fn)
 
             torch.cuda.empty_cache()
-        cur_val_loss = val_loss
+        # cur_val_loss = val_loss
 
     pbar.close()
     print(f"Training took {time.time() - t0:.2f} seconds")
@@ -201,9 +206,9 @@ def train_network(args, train_loader, val_loader, test_loader, net_name, nn_fn, 
     writer.flush()
     writer.close()
 
-    # Test the model
-    test_loss = test(args, reco_net, test_loader, min_max_params)
-    print(f"Test Loss: {test_loss}")
+    # # Test the model
+    # test_loss = test(args, reco_net, test_loader, min_max_params)
+    # print(f"Test Loss: {test_loss}")
 
     return reco_net
 
@@ -303,8 +308,7 @@ def validate(args, reco_net, val_loader, min_max_params):
 
             target_amide_fs_ksw = normalize_range(original_array=input_amide_fs_ksw,
                                                   original_min=min_amide_param_tensor,
-                                                  original_max=max_amide_param_tensor, new_min=0, new_max=1).to(
-                args.device)
+                                                  original_max=max_amide_param_tensor, new_min=0, new_max=1).to(args.device)
 
             input_water_t1t2 = normalize_range(original_array=input_water_t1t2, original_min=min_water_t1t2_tensor,
                                                original_max=max_water_t1t2_tensor, new_min=0, new_max=1).to(args.device)
@@ -363,8 +367,7 @@ def test(args, reco_net, test_loader, min_max_params):
 
             target_amide_fs_ksw = normalize_range(original_array=input_amide_fs_ksw,
                                                   original_min=min_amide_param_tensor,
-                                                  original_max=max_amide_param_tensor, new_min=0, new_max=1).to(
-                args.device)
+                                                  original_max=max_amide_param_tensor, new_min=0, new_max=1).to(args.device)
 
             input_water_t1t2 = normalize_range(original_array=input_water_t1t2, original_min=min_water_t1t2_tensor,
                                                original_max=max_water_t1t2_tensor, new_min=0, new_max=1).to(args.device)
@@ -373,8 +376,8 @@ def test(args, reco_net, test_loader, min_max_params):
                                               original_max=max_mt_param_tensor, new_min=0, new_max=1).to(args.device)
 
             # Adding noise to the input signals (trajectories)
-            glu_noised_sig = cur_glu_norm_sig + torch.randn(cur_glu_norm_sig.size()) * args.noise_std
-            amide_noised_sig = cur_amide_norm_sig + torch.randn(cur_amide_norm_sig.size()) * args.noise_std
+            glu_noised_sig = cur_glu_norm_sig + torch.randn(cur_glu_norm_sig.size()) * args.noise_std  # args.noise_std
+            amide_noised_sig = cur_amide_norm_sig + torch.randn(cur_amide_norm_sig.size()) * args.noise_std  # args.noise_std
 
             # adding the mt_fs_ksw and t1, t2 as additional nn input
             target = torch.hstack((target_glu_fs_ksw, target_amide_fs_ksw))
@@ -393,47 +396,6 @@ def test(args, reco_net, test_loader, min_max_params):
 
     return test_loss / len(test_loader)
 
-def define_min_max(memmap_fn, sched_iter, add_iter, device):
-    num_columns = sched_iter + add_iter + 2
-    memmap_array = np.memmap(memmap_fn, dtype=np.float64, mode='r')
-    num_rows = memmap_array.size // num_columns  # Calculate the number of rows
-    memmap_array.shape = (num_rows, num_columns)  # [#, 30+6]
-
-    min_fs = np.min(memmap_array[:, 4])  # uncomment if non-zero minimum limit is required
-    min_ksw = np.min(memmap_array[:, 5].transpose().astype(float))  # uncomment if non-zero minimum limit needed
-    max_fs = np.max(memmap_array[:, 4])
-    max_ksw = np.max(memmap_array[:, 5].transpose().astype(float))
-
-    min_t1w = np.min(memmap_array[:, 2])
-    min_t2w = np.min(memmap_array[:, 3].transpose().astype(float))
-    max_t1w = np.max(memmap_array[:, 2])
-    max_t2w = np.max(memmap_array[:, 3].transpose().astype(float))
-
-    min_mt_fs = np.min(memmap_array[:, 6])
-    min_mt_ksw = np.min(memmap_array[:, 7].transpose().astype(float))
-    max_mt_fs = np.max(memmap_array[:, 6])
-    max_mt_ksw = np.max(memmap_array[:, 7].transpose().astype(float))
-
-    min_amine_fs = np.min(memmap_array[:, 0])
-    min_amine_ksw = np.min(memmap_array[:, 1].transpose().astype(float))
-    max_amine_fs = np.max(memmap_array[:, 0])
-    max_amine_ksw = np.max(memmap_array[:, 1].transpose().astype(float))
-
-    min_param_tensor = torch.tensor(np.hstack((min_fs, min_ksw)), requires_grad=False).to(device)  # can be switched to  min_fs, min_ksw
-    max_param_tensor = torch.tensor(np.hstack((max_fs, max_ksw)), requires_grad=False).to(device)
-
-    min_water_t1t2_tensor = torch.tensor(np.hstack((min_t1w, min_t2w)), requires_grad=False).to(device)
-    max_water_t1t2_tensor = torch.tensor(np.hstack((max_t1w, max_t2w)), requires_grad=False).to(device)
-
-    min_mt_param_tensor = torch.tensor(np.hstack((min_mt_fs, min_mt_ksw)), requires_grad=False).to(device)  # can be switched to  min_fs, min_ksw
-    max_mt_param_tensor = torch.tensor(np.hstack((max_mt_fs, max_mt_ksw)), requires_grad=False).to(device)  # can be switched to  min_fs, min_ksw
-
-    min_amine_param_tensor = torch.tensor(np.hstack((min_amine_fs, min_amine_ksw)), requires_grad=False).to(device)  # can be switched to  min_fs, min_ksw
-    max_amine_param_tensor = torch.tensor(np.hstack((max_amine_fs, max_amine_ksw)),
-                                       requires_grad=False).to(device)  # can be switched to  min_fs, min_ksw
-
-    return (min_param_tensor, max_param_tensor, min_water_t1t2_tensor, max_water_t1t2_tensor,
-            min_mt_param_tensor, max_mt_param_tensor, min_amine_param_tensor, max_amine_param_tensor)
 
 def min_max_saver(min_max_params, nn_fn):
     # Convert tensors to numpy arrays
@@ -472,14 +434,18 @@ if __name__ == '__main__':
     # Initialize device:
     device = initialize_device()
     parser.add_argument('--device', default=device)
-    parser.add_argument('--dict-name-category', type=str, default='glu_conc_high_500')  # glu_amide_lim
+    parser.add_argument('--scenario-type', type=str, default='4pool')
+    parser.add_argument('--norm-type', type=str, default='2norm')  # glu_amide_lim
+    parser.add_argument('--dict-name-category', type=str, default='0_25_7500_seq')  # glu_amide_lim
     parser.add_argument('--fp-prtcl-names', default=['107a', '51_Amide'])
     parser.add_argument('--sched-iter', type=int, default=30)
     parser.add_argument('--add-iter', type=int, default=6)
-    parser.add_argument('--learning-rate', type=float, default=1e-4)
+    parser.add_argument('--learning-rate', type=float, default=2e-4)
+    # parser.add_argument('--step-size', type=float, default=5)
+    # parser.add_argument('--gamma', type=float, default=0.5)
     parser.add_argument('--batch-size', type=int, default=1024)
-    parser.add_argument('--num-epochs', type=int, default=20)
-    parser.add_argument('--noise-std', type=float, default=2e-3)
+    parser.add_argument('--num-epochs', type=int, default=10)
+    parser.add_argument('--noise-std', type=float, default=1e-2)
     parser.add_argument('--min-delta', type=float, default=0.05)  # minimum absolute change in the loss function
     parser.add_argument('--patience', default=np.inf)
 

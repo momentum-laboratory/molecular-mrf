@@ -96,14 +96,14 @@ def b0_correction(b0_map, original_images, w_hz):  # haven't checked it
     """
 
     # Initialization
-    original_images = original_images.transpose(1, 2, 0)  # (57/51/30, 64, 64) -> (64, 64, 57/51/30)
+    # original_images = original_images.transpose(1, 2, 0)  # (57/51/30, 64, 64) -> (64, 64, 57/51/30)
     b0_corrected_images = np.zeros(np.shape(original_images))
 
-    for r_ind in np.arange(original_images.shape[0]):
-        for c_ind in range(original_images.shape[1]):
+    for r_ind in range(original_images.shape[1]):
+        for c_ind in range(original_images.shape[2]):
 
             # Current pixel original z-spectrum
-            cur_pixel_orig_z_vec = original_images[r_ind, c_ind, :].reshape(-1, 1)
+            cur_pixel_orig_z_vec = original_images[:, r_ind, c_ind].reshape(-1, 1)
 
             # Current pixel B0 shift (Hz)
             cur_pixel_b0 = b0_map[r_ind, c_ind]
@@ -112,9 +112,9 @@ def b0_correction(b0_map, original_images, w_hz):  # haven't checked it
             if cur_pixel_b0 != 0:
                 # Cubic spline interpolation (initially flipping for splrep compatibility)
                 tck = interpolate.splrep(np.flipud(w_hz - cur_pixel_b0), np.flipud(cur_pixel_orig_z_vec), s=0)
-                b0_corrected_images[r_ind, c_ind, :] = np.squeeze(interpolate.splev(w_hz, tck, der=0))
+                b0_corrected_images[:, r_ind, c_ind] = np.squeeze(interpolate.splev(w_hz, tck, der=0))
 
-    b0_corrected_images = b0_corrected_images.transpose(2, 0, 1)  # (64, 64, 57/51/30) -> (57/51/30, 64, 64)
+    # b0_corrected_images = b0_corrected_images.transpose(2, 0, 1)  # (64, 64, 57/51/30) -> (57/51/30, 64, 64)
 
     return b0_corrected_images
 

@@ -2,6 +2,7 @@ import os
 import cv2
 import numpy as np
 import pydicom as dcm
+import pandas as pd
 from brukerapi.dataset import Dataset
 from my_funcs.path_functions import find_n
 
@@ -22,6 +23,23 @@ def bruker_dataset_creator(subject_fn, txt_file_name, fp_prtcl_name):
     # Find E number where protocol was saved:
     glu_phantom_txt_fn = os.path.join(subject_fn, txt_file_name)  # root->scans->date->subject
     exp_id = find_n(glu_phantom_txt_fn, fp_prtcl_name)  # root->scans->date->subject->txt file
+    # Paths to relevant files:
+    fid_fn = os.path.join(subject_fn, f'{exp_id}', 'pdata', '1', '2dseq')  # fid file path
+    dicom_fn = os.path.join(subject_fn, f'{exp_id}', 'pdata', '1', 'dicom')  # dicom folder path
+    mrf_files_fn = os.path.join(subject_fn, f'{exp_id}', 'mrf_files')  # mrf_files folder path
+
+    bruker_dataset = Dataset(fid_fn)
+    bruker_dataset.add_parameter_file('method')  # load bruker dataset (with method only!)
+
+    return dicom_fn, mrf_files_fn, bruker_dataset
+
+def bruker_dataset_creator_csv(subject_fn, fp_prtcl_name):
+    """
+    Create bruker dataset
+    """
+    # Find E number where protocol was saved:
+    doc_df = pd.read_csv(os.path.join(subject_fn, 'scan_doc.csv'))
+    exp_id = doc_df[doc_df['scan name'] == fp_prtcl_name]['export_idx'].values[0]
     # Paths to relevant files:
     fid_fn = os.path.join(subject_fn, f'{exp_id}', 'pdata', '1', '2dseq')  # fid file path
     dicom_fn = os.path.join(subject_fn, f'{exp_id}', 'pdata', '1', 'dicom')  # dicom folder path
@@ -90,6 +108,18 @@ def m0_normalizer(arr_dicom_data):
     complete_cest = arr_dicom_data[1:, :, :]
 
     m0_norm_cest = np.divide(complete_cest, np.where(m0_cest == 0, 1e-8, m0_cest))  # (30/51/57, 64, 64)
+
+    return m0_norm_cest
+
+def m0_normalizer_new(arr_dicom_data):
+    """
+    Normalizes channels by M0 (M0 image)
+    :param arr_dicom_data: the arranged dicom data (31/52/58, 64, 64)
+    :return: m0_norm_cest: the m0 arranged dicom data (31/52/58, 64, 64)
+    """
+    m0_cest = arr_dicom_data[0:1, :, :]
+
+    m0_norm_cest = np.divide(arr_dicom_data, np.where(m0_cest == 0, 1e-8, m0_cest))  # (30/51/57, 64, 64)
 
     return m0_norm_cest
 

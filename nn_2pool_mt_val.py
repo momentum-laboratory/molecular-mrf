@@ -12,8 +12,8 @@ import pandas as pd
 
 import time
 import os
-# import tqdm
-import tqdm.notebook as tqdm
+import tqdm
+# import tqdm.notebook as tqdm
 
 from utils.normalization import normalize_range, min_max_yaml
 from utils.seed import set_seed
@@ -33,12 +33,10 @@ def main(args):
     current_dir = os.getcwd()  # Get the current directory
     parent_dir = os.path.dirname(current_dir)  # Navigate up one directory level
     mt_dict_fn = os.path.join(
-        parent_dir, 'data', 'exp', '4pool',
-        args.dict_name_category, 'mt', args.fp_prtcl_names[0], 'dict.pkl')  # dict folder directory
+        parent_dir, 'data', 'exp', '4pool', args.fp_prtcl_names[0], args.dict_name_category, 'dict.pkl')  # dict folder directory
 
-    net_name = f'{args.dict_name_category}_mt_noise_{args.noise_std}_lr_{args.learning_rate}_{args.batch_size}'
-    nn_fn = os.path.join(current_dir, 'mouse_nns', '4pool',
-                         args.dict_name_category, 'mt', f'{net_name}.pt')  # nn directory
+    net_name = f'{args.dict_name_category}_mt_train_{args.norm_type}_{args.sched_iter}_noise_{args.noise_std}_lr_{args.learning_rate}_{args.batch_size}'
+    nn_fn = os.path.join(current_dir, 'mouse_nns', '4pool', 'MT52', args.dict_name_category, f'{net_name}.pt')  # nn directory
 
     # min max value calc and save:
     yaml_file_path = os.path.join(os.path.dirname(mt_dict_fn), 'scenario.yaml')
@@ -52,7 +50,7 @@ def main(args):
     print(dataset_size)
 
     # Split indices for training, validation, and test sets
-    train_indices, val_indices, test_indices = split_dataset_indices(dataset_size, val_ratio=0.2, test_ratio=0.1)
+    train_indices, val_indices, test_indices = split_dataset_indices(dataset_size, val_ratio=0, test_ratio=0)
 
     # Create subsets
     train_dataset = Subset(full_dataset, train_indices)
@@ -145,34 +143,36 @@ def train_network(args, train_loader, val_loader, test_loader, net_name, nn_fn, 
         # Average loss for this epoch
         loss_per_epoch.append(cum_loss / (counter + 1))
 
-        # Validate the model
-        val_loss = validate(args, reco_net, val_loader, min_max_params)
-        val_loss_per_epoch.append(val_loss)
-
-        writer.add_scalar("Loss/train", loss_per_epoch[-1], epoch)
-        writer.add_scalar("Loss/val", val_loss, epoch)
+        # # Validate the model
+        # val_loss = validate(args, reco_net, val_loader, min_max_params)
+        # val_loss_per_epoch.append(val_loss)
+        #
+        # writer.add_scalar("Loss/train", loss_per_epoch[-1], epoch)
+        # writer.add_scalar("Loss/val", val_loss, epoch)
 
         pbar.set_description(f'Epoch: {epoch + 1}/{args.num_epochs}, '
                              f'Train Loss = {loss_per_epoch[-1]}, '
-                             f'Val Loss = {val_loss_per_epoch[-1]}')
+                             # f'Val Loss = {val_loss_per_epoch[-1]}'
+                             )
         pbar.update(1)
 
-        # Early stopping logic
-        if (min_loss - val_loss_per_epoch[-1]) / min_loss > args.min_delta:
-            min_loss = val_loss_per_epoch[-1]
-            patience_counter = 0
-        else:
-            patience_counter += 1
-
-        if patience_counter > args.patience:
-            print('Early stopping!')
-            break
+        # # Early stopping logic
+        # if (min_loss - val_loss_per_epoch[-1]) / min_loss > args.min_delta:
+        #     min_loss = val_loss_per_epoch[-1]
+        #     patience_counter = 0
+        # else:
+        #     patience_counter += 1
+        #
+        # if patience_counter > args.patience:
+        #     print('Early stopping!')
+        #     break
 
         # # Scheduler step
         # scheduler.step()
 
         # Save model checkpoint when val loss gets better
-        if val_loss <= cur_val_loss:
+        # if val_loss <= cur_val_loss:
+        if epoch % 10 == 0:
             print(f"\nSaved epoch {epoch} model")
             torch.save({
                 'model_state_dict': reco_net.state_dict(),
@@ -184,7 +184,7 @@ def train_network(args, train_loader, val_loader, test_loader, net_name, nn_fn, 
             }, nn_fn)
 
             torch.cuda.empty_cache()
-        cur_val_loss = val_loss
+        # cur_val_loss = val_loss
 
     pbar.close()
     print(f"Training took {time.time() - t0:.2f} seconds")
@@ -192,9 +192,9 @@ def train_network(args, train_loader, val_loader, test_loader, net_name, nn_fn, 
     writer.flush()
     writer.close()
 
-    # Test the model
-    test_loss = test(args, reco_net, test_loader, min_max_params)
-    print(f"Test Loss: {test_loss}")
+    # # Test the model
+    # test_loss = test(args, reco_net, test_loader, min_max_params)
+    # print(f"Test Loss: {test_loss}")
 
     return reco_net
 
@@ -266,7 +266,7 @@ def validate(args, reco_net, val_loader, min_max_params):
             input_water_t1t2 = torch.stack((cur_t1w, cur_t2w), dim=1).to(args.device)
 
             # Normalizing the target and input_water_t1t2
-            target_mt_fs_ksw = normalize_range(original_array=target, original_min=min_param_tensor,
+            target = normalize_range(original_array=target, original_min=min_param_tensor,
                                                 original_max=max_param_tensor, new_min=0, new_max=1).to(args.device)
 
             input_water_t1t2 = normalize_range(original_array=input_water_t1t2, original_min=min_water_t1t2_tensor,
@@ -276,7 +276,6 @@ def validate(args, reco_net, val_loader, min_max_params):
             mt_noised_sig = cur_mt_norm_sig + torch.randn(cur_mt_norm_sig.size()) * args.noise_std
 
             # adding the mt_fs_ksw and t1, t2 as additional nn input
-            target = torch.hstack((target_mt_fs_ksw))
             noised_sig = torch.hstack((input_water_t1t2,
                                        mt_noised_sig.to(args.device))).to(args.device)
 
@@ -361,11 +360,11 @@ if __name__ == '__main__':
     parser.add_argument('--device', default=device)
     parser.add_argument('--scenario-type', type=str, default='2pool')
     parser.add_argument('--norm-type', type=str, default='2norm')  # glu_amide_lim
-    parser.add_argument('--dict-name-category', type=str, default='glu_50')  # glu_amide_lim
+    parser.add_argument('--dict-name-category', type=str, default='mt_seq_30')  # glu_amide_lim
     parser.add_argument('--fp-prtcl-names', default=['MT52'])
-    parser.add_argument('--sched-iter', type=int, default=31)
+    parser.add_argument('--sched-iter', type=int, default=30)
     parser.add_argument('--add-iter', type=int, default=2)
-    parser.add_argument('--learning-rate', type=float, default=1e-4)
+    parser.add_argument('--learning-rate', type=float, default=2e-4)
     parser.add_argument('--batch-size', type=int, default=1024)
     parser.add_argument('--num-epochs', type=int, default=150)
     parser.add_argument('--noise-std', type=float, default=0.01)

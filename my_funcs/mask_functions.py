@@ -128,8 +128,8 @@ def tumor_masks_processor(glu_mouse_fn, resratio, idx=0):
     # Find the overlapping regions (where both masks are 1)
     overlap = np.logical_and(tumor_mask == 1, mirror_mask == 1)
 
-    # Set the overlapping regions to 0 in both masks
-    tumor_mask[overlap] = 0
+    # Set the overlapping regions to 0 in mirror mask
+    # tumor_mask[overlap] = 0
     mirror_mask[overlap] = 0
 
     selem = disk(3)

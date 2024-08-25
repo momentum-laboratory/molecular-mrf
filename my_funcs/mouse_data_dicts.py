@@ -18,14 +18,15 @@ subject_dicts_jan_24 = [
     ]
 
 # These mice are young and have tumors
-subject_dicts_april = [
+subject_dicts_april_tumor = [
     {'scan_name': '24_04_04_glu_tumor_mouse_37deg',
-     'sub_name': '1_mouse1_left',
+     'sub_name': '1_left',
      'month': 'apr',
      'center': [39, 15],
      'voxel_origin': [28, 13],
-     't_shift': [1, 8],  # up, right
-     'highres_img_idx': 2,
+     't_shift': [1, 7],  # up, right [1, 8]
+     'highres_img_idx': 4,
+     'mask_slice': 2,
      'resratio': 4,
      'roi_center': [0, 0],
      'temp': 37,
@@ -33,12 +34,13 @@ subject_dicts_april = [
      'z_b1s_names': ['0p7uT', '1p5uT']
      },
     {'scan_name': '24_04_04_glu_tumor_mouse_37deg',
-     'sub_name': '2_mouse2_right',
+     'sub_name': '2_right',
      'month': 'apr',
      'center': [25, 14],
      'voxel_origin': [16, 11],
      't_shift': [0, 0],  # up, right
-     'highres_img_idx': 1,
+     'highres_img_idx': 2,
+     'mask_slice': 1,
      'resratio': 4,
      'roi_center': [0, 0],
      'temp': 37,
@@ -46,12 +48,13 @@ subject_dicts_april = [
      'z_b1s_names': ['0p7uT', '1p5uT']
      },
         {'scan_name': '24_04_04_glu_tumor_mouse_37deg',
-     'sub_name': '3_mouse3_two_ears',
+     'sub_name': '3_two_ears',
      'month': 'apr',
      'center': [30, 19],
      'voxel_origin': [21, 14],
-     't_shift': [0, 0],  # up, right
-     'highres_img_idx': 1,
+     't_shift': [1, 0],  # up, right
+     'highres_img_idx': 2,
+     'mask_slice': 1,
      'resratio': 4,
      'roi_center': [0, 0],
      'temp': 37,
@@ -293,6 +296,19 @@ subject_dicts_july_ped_tumor_8 = [
      'z_b1s': [1.5],
      'z_b1s_names': ['1p5uT']
      },
+    {'scan_name': '24_07_08_pediatric_tumor_mouse_37deg',
+     'sub_name': '2R',
+     'month': 'july',
+     'center': [0, 0],  # do I ever use this?
+     'voxel_origin': [0, 0],  # do I ever use this?
+     't_shift': [0, 0],  # up, right
+     'highres_img_idx': 1,  # ?
+     'mask_slice': 1,  # ?
+     'resratio': 2,
+     'temp': 37,
+     'z_b1s': [1.5],
+     'z_b1s_names': ['1p5uT']
+     },
  ]
 
 subject_dicts_july_ped_tumor_15 = [
@@ -348,4 +364,174 @@ subject_dicts_july_ped_tumor_15 = [
      'z_b1s': [1.5],
      'z_b1s_names': ['1p5uT']
      },
+    {'scan_name': '24_07_15_pediatric_tumor_mouse_37deg',
+     'sub_name': '2R',
+     'month': 'july',
+     'center': [0, 0],  # do I ever use this?
+     'voxel_origin': [0, 0],  # do I ever use this?
+     't_shift': [0, 0],  # up, right
+     'highres_img_idx': 1,
+     'mask_slice': 1,
+     'resratio': 2,
+     'temp': 37,
+     'z_b1s': [1.5],
+     'z_b1s_names': ['1p5uT']
+     },
+ ]
+
+subject_dicts_july_ped_tumor_29 = [
+        {'scan_name': '24_07_29_pediatric_tumor_mouse_37deg',
+     'sub_name': '1L',
+     'month': 'july',
+     'center': [0, 0],  # do I ever use this?
+     'voxel_origin': [0, 0],  # do I ever use this?
+     't_shift': [0, 0],  # down, left
+     'highres_img_idx': 2,
+     'mask_slice': 1,
+     'resratio': 2,
+     'temp': 37,
+     'z_b1s': [1.5],
+     'z_b1s_names': ['1p5uT']
+     },
+        {'scan_name': '24_07_29_pediatric_tumor_mouse_37deg',
+     'sub_name': '1R',
+     'month': 'july',
+     'center': [0, 0],  # do I ever use this?
+     'voxel_origin': [0, 0],  # do I ever use this?
+     't_shift': [0, 0],  # up, right
+     'highres_img_idx': 0,
+     'mask_slice': 0,
+     'resratio': 2,
+     'temp': 37,
+     'z_b1s': [1.5],
+     'z_b1s_names': ['1p5uT']
+     },
+    {'scan_name': '24_07_29_pediatric_tumor_mouse_37deg',
+     'sub_name': '1R1L',
+     'month': 'july',
+     'center': [0, 0],  # do I ever use this?
+     'voxel_origin': [0, 0],  # do I ever use this?
+     't_shift': [0, 0],  # up, right
+     'highres_img_idx': 2,
+     'mask_slice': 1,
+     'resratio': 2,
+     'temp': 37,
+     'z_b1s': [1.5],
+     'z_b1s_names': ['1p5uT']
+     }
+ ]
+
+subject_dicts_july_adult_tumor_25 = [
+        {'scan_name': '24_07_25_adult_tumor_mouse_37deg',
+     'sub_name': 'B1',
+     'month': 'july',
+     'center': [0, 0],  # do I ever use this?
+     'voxel_origin': [0, 0],  # do I ever use this?
+     't_shift': [0, 0],  # down, left
+     'highres_img_idx': 4,
+     'mask_slice': 2,
+     'resratio': 2,
+     'temp': 37,
+     'z_b1s': [1.5],
+     'z_b1s_names': ['1p5uT']
+     },
+        {'scan_name': '24_07_25_adult_tumor_mouse_37deg',
+     'sub_name': 'B4',
+     'month': 'july',
+     'center': [0, 0],  # do I ever use this?
+     'voxel_origin': [0, 0],  # do I ever use this?
+     't_shift': [0, 0],  # up, right
+     'highres_img_idx': 4,
+     'mask_slice': 2,
+     'resratio': 2,
+     'temp': 37,
+     'z_b1s': [1.5],
+     'z_b1s_names': ['1p5uT']
+     },
+    {'scan_name': '24_07_25_adult_tumor_mouse_37deg',
+     'sub_name': 'C5',
+     'month': 'july',
+     'center': [0, 0],  # do I ever use this?
+     'voxel_origin': [0, 0],  # do I ever use this?
+     't_shift': [0, 0],  # up, right
+     'highres_img_idx': 4,
+     'mask_slice': 2,
+     'resratio': 2,
+     'temp': 37,
+     'z_b1s': [1.5],
+     'z_b1s_names': ['1p5uT']
+     },
+    # {'scan_name': '24_07_25_adult_tumor_mouse_37deg',
+    #  'sub_name': 'E2',
+    #  'month': 'july',
+    #  'center': [0, 0],  # do I ever use this?
+    #  'voxel_origin': [0, 0],  # do I ever use this?
+    #  't_shift': [0, 0],  # up, right
+    #  'highres_img_idx': 4,
+    #  'mask_slice': 4,
+    #  'resratio': 2,
+    #  'temp': 37,
+    #  'z_b1s': [1.5],
+    #  'z_b1s_names': ['1p5uT']
+    #  }
+ ]
+
+subject_dicts_august_baseline = [
+        {'scan_name': '24_08_19_control_mice_PD model',
+     'sub_name': '1strips',
+     'month': 'july',
+     't_shift': [0, 0],  # down, left
+     'highres_img_idx': 0,
+     'mask_slice': 0,
+     'resratio': 2,
+     'temp': 37,
+     'z_b1s': [1.5],
+     'z_b1s_names': ['1p5uT']
+     },
+        {'scan_name': '24_08_19_control_mice_PD model',
+     'sub_name': '2strips',
+     'month': 'july',
+     't_shift': [0, 0],  # up, right
+     'highres_img_idx': 0,
+     'mask_slice': 0,
+     'resratio': 2,
+     'temp': 37,
+     'z_b1s': [1.5],
+     'z_b1s_names': ['1p5uT']
+     },
+    {'scan_name': '24_08_19_control_mice_PD model',
+     'sub_name': '3strips',
+     'month': 'july',
+     't_shift': [0, 0],  # up, right
+     'highres_img_idx': 0,
+     'mask_slice': 0,
+     'resratio': 2,
+     'temp': 37,
+     'z_b1s': [1.5],
+     'z_b1s_names': ['1p5uT']
+     },
+    {'scan_name': '24_08_19_control_mice_PD model',
+     'sub_name': '4strips',
+     'month': 'july',
+     't_shift': [0, 0],  # up, right
+     'highres_img_idx': 0,
+     'mask_slice': 0,
+     'resratio': 2,
+     'temp': 37,
+     'z_b1s': [1.5],
+     'z_b1s_names': ['1p5uT']
+     },
+    {'scan_name': '24_08_19_control_mice_PD model',
+     'sub_name': '5strips',
+     'month': 'july',
+     'center': [0, 0],  # do I ever use this?
+     'voxel_origin': [0, 0],  # do I ever use this?
+     't_shift': [0, 0],  # up, right
+     'highres_img_idx': 0,
+     'mask_slice': 0,
+     'resratio': 2,
+     'temp': 37,
+     'z_b1s': [1.5],
+     'z_b1s_names': ['1p5uT']
+     }
  ]
