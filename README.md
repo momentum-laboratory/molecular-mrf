@@ -1,6 +1,9 @@
 # Quantitative Molecular Imaging using Deep Magnetic Resonance Fingerprinting 
 This repository contains a CEST-MRF (Bloch-McConnell-based) signal simulator and an extensive step-by-step guide for semisolid MT and CEST MRF experiments. This repository is part of a detailed protocol paper entitled "Quantitative Molecular Imaging using Deep Magnetic Resonance Fingerprinting" (under review at Nat. Prot.). 
 
+[![DOI](https://zenodo.org/badge/770832769.svg)](https://doi.org/10.5281/zenodo.14211516)
+
+
 ## The key publications associated with this protocol are:
 1. Perlman, O., Ito, H., Herz, K. et al. Quantitative imaging of apoptosis following oncolytic virotherapy by magnetic resonance fingerprinting aided by deep learning. Nat. Biomed. Eng 6, 648–657 (2022). (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9091056/)
 
@@ -38,7 +41,7 @@ pip3 install opencv-python
 If you are using the deep_reco.ipynb Jupyter notebook examples, these libraries will be installed in the first cell of the notebook.
 
 
-## Known Bug
+### A known bug and solution
 It has been found that the current version can yield errors in Pulseq or NumPy on some machines. Please do the following (yes, 2 times):
 
 ```
