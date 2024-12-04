@@ -24,6 +24,17 @@ The repository includes data, sample code, trained neural networks, and pulse se
 - Git
 - SWIG (can be installed using `sudo apt-get install swig` or [SWIG](https://www.swig.org/download.html))
 
+### A known bug and solution
+
+If you are using conda with global OS GCC version greater than 12.0, install these libraries first (before `pip install -e .`):
+
+```
+conda install -c conda-forge libstdcxx libgcc
+```
+
+Otherwise, the simulator will be compiled with the globally available compiler and will encounter a libstdc++ version mismatch error.
+In case of a similar problem on a Windows machine, try updating Visual C++.
+
 ## Installation
 
 To install, execute the following command in the terminal (ideally within a clean conda environment or similar):
@@ -41,16 +52,7 @@ pip3 install opencv-python
 If you are using the deep_reco.ipynb Jupyter notebook examples, these libraries will be installed in the first cell of the notebook.
 
 
-### A known bug and solution
 
-If you are using conda with global OS GCC version greater than 12.0, install these libraries first:
-
-```
-conda install -c conda-forge libstdcxx libgcc
-```
-
-Otherwise, the simulator will be compiled with the globally available compiler and will encounter a libstdc++ version mismatch error.
-In case of a similar problem on a Windows machine, try updating Visual C++.
 
 ### Docker
 Alternatively, you can use Docker, which has everything preinstalled. Build the image with the provided Dockerfile using the following command:
