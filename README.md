@@ -42,18 +42,15 @@ If you are using the deep_reco.ipynb Jupyter notebook examples, these libraries 
 
 
 ### A known bug and solution
-It has been found that the current version can yield errors in Pulseq or NumPy on some machines. Please do the following (yes, 2 times):
+
+If you are using conda with global OS GCC version greater than 12.0, install these libraries first:
 
 ```
-pip uninstall numpy
-pip uninstall numpy
-
-pip uninstall pulseq
-pip uninstall pulseq
-
-pip install -e .
+conda install -c conda-forge libstdcxx libgcc
 ```
 
+Otherwise, the simulator will be compiled with the globally available compiler and will encounter a libstdc++ version mismatch error.
+In case of a similar problem on a Windows machine, try updating Visual C++.
 
 ### Docker
 Alternatively, you can use Docker, which has everything preinstalled. Build the image with the provided Dockerfile using the following command:
