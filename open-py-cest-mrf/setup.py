@@ -11,35 +11,66 @@ import subprocess
 import sys
 
 
-
 def install_last_pypulseq():
     print('START installing of pypulseq')
     cur_dir = os.path.dirname(__file__)
     os.chdir('cest_mrf')
-    # print(os.getcwd())
-    # print(os.path.dirname(__file__))
-    # print(os.path.join(os.getcwd(),'pypulseq'))
-    # if shutil.which('git') is None:
-    #     raise Exception(f'cest_mrf: Git is not installed on your system. Please install Git.')
-    # cloned = subprocess.call(['git', 'clone','--branch', 'master' , 'https://github.com/imr-framework/pypulseq'])
-    # installed = subprocess.call([sys.executable, '-m', 'pip',  'install', '-e','.'], cwd=os.path.join(os.path.dirname(__file__),'pypulseq'))
-    # reseted = subprocess.call(['git', 'reset','--hard', 'cc9ccfb'], cwd=os.path.join(os.path.dirname(__file__),'pypulseq') )
-    # os.remove(os.path.join(os.path.dirname(__file__), os.path.join('pypulseq','pypulseq','Sequence','write_seq.py')))
-    # shutil.copy(os.path.join(os.path.dirname(__file__),'write_seq.py'), os.path.join(os.path.dirname(__file__),os.path.join('pypulseq','pypulseq','Sequence','write_seq.py')))
-    # #os.remove('write_seq.py')
 
-    if shutil.which('git') is None:
-        raise Exception(f'cest_mrf: Git is not installed on your system. Please install Git.')
-    cloned = subprocess.call(['git', 'clone','--branch', 'master' , 'https://github.com/imr-framework/pypulseq'])
-    installed = subprocess.call([sys.executable, '-m', 'pip',  'install', '-e','.'], cwd=os.path.join(os.getcwd(),'pypulseq'))
-    reseted = subprocess.call(['git', 'reset','--hard', 'cc9ccfb'], cwd=os.path.join(os.getcwd(),'pypulseq') )
-    os.remove(os.path.join(os.getcwd(), os.path.join('pypulseq','pypulseq','Sequence','write_seq.py')))
-    shutil.copy(os.path.join(os.getcwd(),'write_seq.py'), os.path.join(os.getcwd(),os.path.join('pypulseq','pypulseq','Sequence','write_seq.py')))
-    #os.remove('write_seq.py')
+    try:
+        # First try to uninstall existing pypulseq
+        print('Attempting to uninstall existing pypulseq...')
+        subprocess.call([sys.executable, '-m', 'pip', 'uninstall', '-y', 'pypulseq'])
 
-    os.chdir(cur_dir)
-    print('pypulseq successfully installed')
+        if shutil.which('git') is None:
+            raise Exception('cest_mrf: Git is not installed on your system. Please install Git.')
+        
+        # Check if custom write_seq.py exists
+        custom_write_seq = os.path.join(os.getcwd(), 'write_seq.py')
+        if not os.path.exists(custom_write_seq):
+            raise Exception('Custom write_seq.py not found')
 
+        # Remove existing pypulseq directory if it exists
+        pypulseq_dir = os.path.join(os.getcwd(), 'pypulseq')
+        if os.path.exists(pypulseq_dir):
+            print('Removing existing pypulseq directory...')
+            shutil.rmtree(pypulseq_dir)
+
+        # Clone repository
+        print('Cloning pypulseq repository...')
+        if subprocess.call(['git', 'clone', '--branch', 'master', 'https://github.com/imr-framework/pypulseq']) != 0:
+            raise Exception('Failed to clone pypulseq repository')
+
+        # Reset to specific commit
+        print('Resetting to specific commit...')
+        if subprocess.call(['git', 'reset', '--hard', 'cc9ccfb'], 
+                         cwd=os.path.join(os.getcwd(), 'pypulseq')) != 0:
+            raise Exception('Failed to reset to specified commit')
+
+        # Replace write_seq.py
+        print('Replacing write_seq.py...')
+        target_file = os.path.join(os.getcwd(), 'pypulseq', 'pypulseq', 'Sequence', 'write_seq.py')
+        if os.path.exists(target_file):
+            os.remove(target_file)
+        shutil.copy(custom_write_seq, target_file)
+
+        # Install package without dependencies
+        print('Installing pypulseq without dependencies...')
+        if subprocess.call([sys.executable, '-m', 'pip', 'install', '--no-deps', '-e', '.'],
+                         cwd=os.path.join(os.getcwd(), 'pypulseq')) != 0:
+            raise Exception('Failed to install pypulseq')
+
+        print('pypulseq successfully installed')
+        
+    except Exception as e:
+        print(f'Error installing pypulseq: {str(e)}')
+        # Cleanup on failure
+        pypulseq_dir = os.path.join(os.getcwd(), 'pypulseq')
+        if os.path.exists(pypulseq_dir):
+            shutil.rmtree(pypulseq_dir)
+        raise
+    
+    finally:
+        os.chdir(cur_dir)
 
 from setuptools import setup, find_packages
 
