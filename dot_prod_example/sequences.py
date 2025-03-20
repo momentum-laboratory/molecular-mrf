@@ -151,8 +151,8 @@ def write_sequence_clinical(seq_defs: dict, seq_fn:str, lims = None, type = 'sca
                 else:
                     seq.add_block(pp.make_delay(pp.calc_duration(post_sl_pulse)+sl_pause_time))
 
-                if n < seq_defs["n_pulses"] - 1:
-                    seq.add_block(pp.make_delay(seq_defs["td"] - sl_time_per_sat))
+            if n < seq_defs["n_pulses"] - 1:
+                seq.add_block(pp.make_delay(seq_defs["td"] - sl_time_per_sat))
 
         if type == 'scanner':
             seq.add_block(pp.make_delay(100e-6)) # hardware related delay
