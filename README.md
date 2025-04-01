@@ -1,5 +1,5 @@
 # Quantitative Molecular Imaging using Deep Magnetic Resonance Fingerprinting 
-This repository contains a CEST-MRF (Bloch-McConnell-based) signal simulator and an extensive step-by-step guide for semisolid MT and CEST MRF experiments. This repository is part of a detailed protocol paper entitled "Quantitative Molecular Imaging using Deep Magnetic Resonance Fingerprinting" (under review at Nat. Prot.). 
+This repository contains a CEST-MRF (Bloch-McConnell-based) signal simulator and an extensive step-by-step guide for semisolid MT and CEST MRF experiments. If you use this code, please cite the associated publication: Vladimirov, N., Cohen, O., Heo, H.Y. et al. Quantitative molecular imaging using deep magnetic resonance fingerprinting. Nat Protoc (2025). https://doi.org/10.1038/s41596-025-01152-w
 
 [![DOI](https://zenodo.org/badge/770832769.svg)](https://doi.org/10.5281/zenodo.14211516)
 
