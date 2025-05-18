@@ -2,7 +2,7 @@ import sys
 import subprocess
 import os
 import shutil
-
+import stat
 import os
 
 from setuptools import setup
@@ -10,6 +10,18 @@ import shutil
 import subprocess
 import sys
 
+def remove_readonly(func, path, exc_info):
+    """
+    Error handler for shutil.rmtree on Windows.
+    If permission is denied, clear readonly bit & retry.
+    """
+    # If the path isn’t writable, make it so
+    if not os.access(path, os.W_OK):
+        os.chmod(path, stat.S_IWRITE)
+        func(path)
+    else:
+        # Re-raise the original exception if it’s not a permissions issue
+        raise
 
 def install_last_pypulseq():
     print('START installing of pypulseq')
@@ -33,7 +45,8 @@ def install_last_pypulseq():
         pypulseq_dir = os.path.join(os.getcwd(), 'pypulseq')
         if os.path.exists(pypulseq_dir):
             print('Removing existing pypulseq directory...')
-            shutil.rmtree(pypulseq_dir)
+            shutil.rmtree(pypulseq_dir, onerror=remove_readonly)
+
 
         # Clone repository
         print('Cloning pypulseq repository...')
@@ -66,7 +79,7 @@ def install_last_pypulseq():
         # Cleanup on failure
         pypulseq_dir = os.path.join(os.getcwd(), 'pypulseq')
         if os.path.exists(pypulseq_dir):
-            shutil.rmtree(pypulseq_dir)
+            shutil.rmtree(pypulseq_dir, onerror=remove_readonly)
         raise
     
     finally:
