@@ -71,6 +71,13 @@ def simulate_mrf(dictionary: dict,
     sp = parse_params(sim_params[idx[0]]) # create pointer to SimulationParameters object
     sf = BMCSimulator(sp, seq_file) # link the SP object with BMCSim
 
+    n_isochromats = 0
+    # set isochromat simulation if needed
+    if 'isochromats' in options.keys():
+        n_isochromats = options['isochromats']['n']
+        # if n_isochromats < 30:
+            # print('Although the number of isochromats depends on various parameters, we recommend to use at least 30.')
+
     # start = time.perf_counter()
     signal = []
     for i in idx:
@@ -82,7 +89,23 @@ def simulate_mrf(dictionary: dict,
         # Output e.g. for three pools is the following vector:
         # [MxA, MxB, MxD, MyA, MyB, MyD, MzA, MzB, MzD, MzC]
         # with A: water pool, B: 1st CEST pool, D: 2nd CEST pool, C: MT pool
-        m_out = sf.RunSimulation()
+
+        # isochromat simulation if needed
+        if n_isochromats > 0:
+            if 't2dash' in options['isochromats'].keys():
+                r2_dash = 1/options['isochromats']['t2dash']
+            else:
+                r2_dash = 1/options['isochromats']['t2star'] - sim_params.params_dict['water_pool']['r2'][i]
+            dw_spins = r2_dash * np.tan(np.pi * .9 * np.linspace(-0.5, 0.5, n_isochromats))
+            dw_spins = dw_spins / (options['scanner']['b0'] * options['scanner']['gamma'] )
+            m_outs = []
+            for dw_spin in dw_spins:
+                options['scanner']['b0_inhom'] = dw_spin
+                sim_params.set_scanner(**options['scanner'])
+                m_outs.append(sf.RunSimulation())
+            m_out = np.mean(m_outs, axis=0)
+        else:
+            m_out = sf.RunSimulation()
 
         # print(f"One simulation took {time.perf_counter() - start:.06f} s.")
         if axes.lower() == 'xy':

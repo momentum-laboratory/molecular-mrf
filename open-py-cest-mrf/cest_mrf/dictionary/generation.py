@@ -10,7 +10,35 @@ from ..simulation.simulate import simulate_mrf
 import math
 from scipy.io import savemat
 
+
 import tqdm
+
+# new func to rename keys in the final dictionary
+def key_map(key):
+    """
+    Maps a given key to a new key based on predefined mapping.
+    """
+    mapping = {'tw1': 't1w', 'tw2': 't2w', 'fww': 'fw',
+               'ts1': 't1s', 'ts2': 't2s', 'fss': 'fs', 'ksw': 'ksw',
+               'tm1': 't1m', 'tm2': 't2m', 'fmm': 'fm', 'lmm': 'lineshape',
+               'dsw': 'dsw', 'dmw': 'dmw', 'kmw': 'kss'}
+    for old_key, new_key in mapping.items():
+        if key.startswith(old_key):
+            return key.replace(old_key, new_key)
+    return None  # Return the original key if no mapping is found
+
+def inverse_key_map(key):
+    """
+    Maps a given key to its original key based on predefined inverse mapping.
+    """
+    inverse_mapping = {v: k for k, v in {'tw1': 't1w', 'tw2': 't2w', 'fww': 'fw',
+                                         'ts1': 't1s', 'ts2': 't2s', 'fss': 'fs', 'ksw': 'ksw',
+                                         'tm1': 't1m', 'tm2': 't2m', 'fmm': 'fm', 'lmm': 'lineshape',
+                                         'dsw': 'dsw', 'dmw': 'dmw', 'kmw': 'kss'}.items()}
+    for new_key, old_key in inverse_mapping.items():
+        if key.startswith(new_key):
+            return key.replace(new_key, old_key)
+    return None  # Return the original key if no inverse mapping is found
 
 def check_dict(dict_):
     # Even single value must be an array to get the next code working
@@ -25,24 +53,32 @@ def prepare_dictionary(dict_, equals=None):
     # generate unique combination
     """
     Input:  dict_:    dictionary variable
-            equals:   list of keys (pairs), which should be equal in all combinations (first equal to second)
+            equals:   list of keys [(key1,key2,factor)], which should be equal in all combinations (second equal to first multiplied by factor)
 
     return: dict_:    dictionary variable, filled with all combinations
             num_comb: total number of all combinations
     """
-
+    
     dict_ = check_dict(dict_)
 
-    var_names = dict_['variables'].keys()
-    var_names = list(var_names)
+    var_names0 = dict_['variables'].keys()
+    var_names0 = list(var_names0)
+    var_names = var_names0.copy()
 
     if equals is not None:
-        for pair in equals:
-            if pair[0] not in var_names or pair[1] not in var_names:
-                raise ValueError(f"Key {pair[0]} or {pair[1]} not in dictionary variables")
-            if pair[0] == pair[1]:
-                raise ValueError(f"Key {pair[0]} is equal to itself")
-            var_names.remove(pair[1])
+        assert isinstance(equals, list), "equals must be a list of tuples"
+
+        for pair_factor in equals:
+            pair_factor = list(pair_factor)
+            assert len(pair_factor) == 3, "equals must be a list of tuples with three elements (x, x*factor, factor) (second eqauls to first multiplied by factor)"
+
+            pair_factor = [inverse_key_map(p) for p in pair_factor[:2]]
+            if pair_factor[0] not in var_names0 or pair_factor[1] not in var_names0:
+                raise ValueError(f"Key {key_map(pair_factor[0])} or {key_map(pair_factor[1])} not in dictionary variables")
+            if pair_factor[0] == pair_factor[1]:
+                raise ValueError(f"Key {key_map(pair_factor[0])} is equal to itself")
+            if pair_factor[1] in var_names:
+                var_names.remove(pair_factor[1])
 
     combinations = list(product(*[dict_['variables'][name] for name in var_names]))
     num_comb = len(combinations)
@@ -53,8 +89,12 @@ def prepare_dictionary(dict_, equals=None):
         dict_[name] = [x[i] for x in combinations]
 
     if equals is not None:
-        for pair in equals:
-            dict_[pair[1]] = dict_[pair[0]]
+        for pair_factor in equals:
+            pair_factor = list(pair_factor)
+            factor = pair_factor[2]
+            pair_factor = [inverse_key_map(p) for p in pair_factor[:2]]
+
+            dict_[pair_factor[1]] = [x * factor for x in dict_[pair_factor[0]]]
 
     return dict_, num_comb
 
@@ -148,17 +188,13 @@ def generate_mrf_cest_dictionary(seq_fn=None,
         print(f"Dictionary simulation took {s:.03f} s.")
 
     # rename the keys to more readable
-    mapping = {'tw1':'t1w','tw2':'t2w','fww':'f',
-               'ts1':'t1s','ts2':'t2s','fss':'fs', 'ksw': 'ksw',
-               'tm1':'t1m','tm2':'t2m','fmm':'fm','lmm':'lineshape'}
     new_dict = {}
     for key, value in dictionary.items():
-        for old_key, new_key in mapping.items():
-            if key.startswith(old_key):
-                # replace the old_key at the start of key with new_key
-                new_key_name = key.replace(old_key, new_key)
-                new_dict[new_key_name] = value
-                break
+        # if key.startswith('dsw') or key.startswith('dmw'):
+        #     continue
+        new_key = key_map(key)
+        new_dict[new_key] = value
+
     dictionary = new_dict
     dictionary['sig'] = combined_signals
 

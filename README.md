@@ -37,7 +37,7 @@ In case of a similar problem on a Windows machine, try updating Visual C++.
 
 ## Installation
 
-To install, execute the following command in the terminal (ideally within a clean conda environment or similar):
+To install, execute the following command in the terminal (ideally within a clean conda environment, e.g., created with `conda create -n env_name python==3.9` or similar):
 ```
 cd open-py-cest-mrf
 pip install -e .
@@ -92,3 +92,11 @@ python -m dot_prod_example.clinical
 `metrics_example` demonstrates the use of the Monte Carlo and the Cramer Rao Bound for assessing the encoding capability of MRF acquisition schedules. It includes `monte_carlo.ipynb` and `crlb.ipynb`.
 
 The `supplementary` folder contains additional materials: in the `phantom_cad` folder, there is an `.stl` file containing the CAD file for the phantom holder. In the `published_pulse_sequences` folder, you can find the pulse sequences mentioned in the Nature Protocols paper. For details, refer to the corresponding `README` file contained in the folder.
+
+## Comments
+Additionally, similar to [pulseq-cest Matlab](https://github.com/kherz/pulseq-cest/tree/master), you can simulate T2* by adding the number of isochromats and the T2* value to the config, e.g.,
+
+```
+cfg['isochromats'] = 10
+cfg['t2star'] = 30e-3
+```

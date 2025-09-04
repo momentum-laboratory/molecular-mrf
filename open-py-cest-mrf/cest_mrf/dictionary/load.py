@@ -94,6 +94,19 @@ def read_mrf_simulation_params(yaml_fn):
     if 'rel_b1' in params:
         options['scanner']['rel_b1'] = params['rel_b1']
 
+    if 'isochromats' in params and ('t2star' in params or 't2dash' in params):
+        options['isochromats'] = {}
+        options['isochromats']['n'] = params['isochromats']
+        if 't2dash' in params:
+            options['isochromats']['t2dash'] = params['t2dash']
+        if 't2star' in params:
+            options['isochromats']['t2star'] = params['t2star']
+        if params['isochromats'] < 30 and params['isochromats'] > 0:
+            print('Although the number of isochromats depends on various parameters, we recommend to use at least 30.')
+
+        conf_t2star = input('Specifying T2 parameters will discard the b0_inhom parameter, since T2 calculation uses Cauchy–Lorentz distributed b0_inhom values. Please confirm (write "yes" or "no"):')
+        assert conf_t2star.lower() in ['yes', 'y'], 'You chose to stop the simulation.'
+
     # more optional parameters
     if 'verbose' in params:
         options['verbose'] = bool(params['verbose'])
