@@ -135,7 +135,7 @@ def generate_dict(cfg):
     yaml_fn = cfg['yaml_fn']
     dict_fn = cfg['dict_fn']
 
-    equals = [('tw1', 'ts1_0')]
+    equals = [('t1w', 't1s_0', 1)]
 
     dictionary = generate_mrf_cest_dictionary(seq_fn=seq_fn, param_fn=yaml_fn, dict_fn=dict_fn,
                                               num_workers=cfg['num_workers'],
