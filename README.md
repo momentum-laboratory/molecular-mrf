@@ -47,7 +47,7 @@ The `-e` argument enables editable mode installation, allowing you to modify the
 If you do not plan to use the Jupyter notebook examples, you must manually install PyTorch and OpenCV, as they are treated as external libraries and are not required by the simulator. You can install them using the following commands:
 ```
 pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu118
-pip3 install opencv-python
+pip3 install opencv-python==4.5.5.62
 ```
 If you are using the deep_reco.ipynb Jupyter notebook examples, these libraries will be installed in the first cell of the notebook.
 
