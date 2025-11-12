@@ -35,6 +35,13 @@ conda install -c conda-forge libstdcxx libgcc
 Otherwise, the simulator will be compiled with the globally available compiler and will encounter a libstdc++ version mismatch error.
 In case of a similar problem on a Windows machine, try updating Visual C++.
 
+If for some reason, you need to use a different NumPy version (but still <2.0), you must specify the deprecated aliases:
+
+```python
+np.int = int
+np.float = float
+```
+
 ## Installation
 
 To install, execute the following command in the terminal (ideally within a clean conda environment, e.g., created with `conda create -n env_name python==3.9` or similar):
