@@ -10,7 +10,7 @@ def write_yaml_dict(cfg: dict, yaml_fn=None):
             raise ValueError("yaml_fn must be defined")
     
     with open(yaml_fn, 'w') as file:
-        yaml.safe_dump(cfg, file, default_flow_style=None)
+        yaml.safe_dump(cfg, file, default_flow_style=None, sort_keys=False)
 
 def write_yaml_2pool(cfg, yaml_fn=None):
     if yaml_fn is None:
